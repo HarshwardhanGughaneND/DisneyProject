@@ -1,0 +1,108 @@
+/* ============================================================
+   Tour Booking Wizard – Root Container
+   ============================================================ */
+.wizard-container {
+    min-height: 100vh;
+    background: #f3f3f3;
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+}
+
+/* ── Step Progress Header ────────────────────────────────── */
+.wizard-header {
+    background: #ffffff;
+    border-bottom: 1px solid #dddbda;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.step-indicator {
+    gap: 0;
+    position: relative;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.wizard-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    cursor: default;
+}
+
+.step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    color: #706e6b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    border: 2px solid #c9c7c5;
+    transition: all 0.25s ease;
+    z-index: 1;
+    position: relative;
+}
+
+.step-active .step-circle {
+    background: #0176d3;
+    border-color: #0176d3;
+    color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(1, 118, 211, 0.2);
+}
+
+.step-completed .step-circle {
+    background: #2e844a;
+    border-color: #2e844a;
+    color: #ffffff;
+}
+
+.step-label {
+    margin-top: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #706e6b;
+    white-space: nowrap;
+}
+
+.step-active .step-label {
+    color: #0176d3;
+}
+
+.step-completed .step-label {
+    color: #2e844a;
+}
+
+/* Connector line between steps */
+.step-connector {
+    position: absolute;
+    top: 17px;
+    left: calc(50% + 18px);
+    width: calc(100% - 36px);
+    height: 2px;
+    background: #e0e0e0;
+    z-index: 0;
+}
+
+.step-completed .step-connector {
+    background: #2e844a;
+}
+
+/* ── Step Content Area ───────────────────────────────────── */
+.wizard-content {
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .wizard-content {
+        padding: 1rem 0.5rem;
+    }
+    .step-label {
+        display: none;
+    }
+}

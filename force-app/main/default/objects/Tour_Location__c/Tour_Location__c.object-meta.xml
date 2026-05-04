@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Represents a physical tour location within a Disney theme park area.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <label>Tour Location</label>
+    <nameField>
+        <label>Tour Location Name</label>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Tour Locations</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+    <fields>
+        <fullName>Area__c</fullName>
+        <description>Theme park area this location belongs to</description>
+        <externalId>false</externalId>
+        <label>Area</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Picklist</type>
+        <valueSet>
+            <restricted>false</restricted>
+            <valueSetDefinition>
+                <sorted>false</sorted>
+                <value><fullName>MK Area</fullName><default>false</default><label>MK Area</label></value>
+                <value><fullName>EP Area</fullName><default>false</default><label>EP Area</label></value>
+                <value><fullName>DHS Area</fullName><default>false</default><label>DHS Area</label></value>
+                <value><fullName>DAK Area</fullName><default>false</default><label>DAK Area</label></value>
+                <value><fullName>DS Area</fullName><default>false</default><label>DS Area</label></value>
+            </valueSetDefinition>
+        </valueSet>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>Brief description of the tour location</description>
+        <externalId>false</externalId>
+        <label>Description</label>
+        <length>500</length>
+        <trackHistory>false</trackHistory>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Max_Capacity__c</fullName>
+        <description>Maximum number of guests that can be accommodated at this location</description>
+        <externalId>false</externalId>
+        <label>Max Capacity</label>
+        <precision>5</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackHistory>false</trackHistory>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Is_Active__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Whether this location is currently active and available for booking</description>
+        <externalId>false</externalId>
+        <label>Is Active</label>
+        <trackHistory>false</trackHistory>
+        <type>Checkbox</type>
+    </fields>
+</CustomObject>

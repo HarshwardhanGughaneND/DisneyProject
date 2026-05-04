@@ -1,0 +1,322 @@
+/* ============================================================
+   Tour Party Confirmation – Screen 4 (Split View)
+   ============================================================ */
+
+.tour-party-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ── Page Header ───────────────────────────────────────────── */
+.page-header {
+    background: linear-gradient(135deg, #032d60 0%, #0176d3 100%);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    color: #ffffff;
+}
+
+.page-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin-top: 0.25rem;
+}
+
+/* ── Split Layout ──────────────────────────────────────────── */
+.split-layout {
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+/* ── LEFT PANEL ────────────────────────────────────────────── */
+.left-panel {
+    position: sticky;
+    top: 1rem;
+}
+
+.party-search-input {
+    padding-left: 2.5rem !important;
+    border-radius: 6px;
+}
+
+.quick-actions {
+    flex-wrap: nowrap;
+}
+
+.quick-btn {
+    width: 100%;
+}
+
+/* ── Reservation Card ──────────────────────────────────────── */
+.reservation-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid #f3f3f3;
+    font-size: 0.875rem;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: #706e6b;
+    font-weight: 500;
+    white-space: nowrap;
+    margin-right: 0.5rem;
+}
+
+.detail-value {
+    color: #032d60;
+    font-weight: 600;
+    text-align: right;
+}
+
+.detail-value_primary {
+    color: #0176d3;
+}
+
+/* ── Household Cards ───────────────────────────────────────── */
+.household-loading {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    color: #706e6b;
+    font-size: 0.875rem;
+}
+
+.household-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #3e3e3c;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.member-row {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f3f3f3;
+    transition: background 0.12s;
+}
+
+.member-row:last-child {
+    border-bottom: none;
+}
+
+.member-avatar {
+    background: #f0f8ff;
+    border-radius: 50%;
+    padding: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.member-avatar-row {
+    gap: 0;
+}
+
+.member-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #3e3e3c;
+}
+
+.member-email {
+    font-size: 0.75rem;
+    color: #706e6b;
+}
+
+.member-action {
+    display: flex;
+    align-items: center;
+}
+
+.in-party-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #a5d6a7;
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.add-member-btn {
+    --sds-c-button-brand-color-background: #0176d3;
+}
+
+.no-members-msg {
+    color: #706e6b;
+    font-size: 0.8125rem;
+    padding: 0.5rem 0;
+    font-style: italic;
+}
+
+.no-household-state {
+    background: #f3f3f3;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+/* ── RIGHT PANEL ───────────────────────────────────────────── */
+.right-panel {
+    /* inherits slds column */
+}
+
+.party-panel-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #032d60;
+}
+
+/* ── Party Members List ────────────────────────────────────── */
+.party-list {
+    border: 1px solid #dddbda;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.party-member-row {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.12s;
+}
+
+.party-member-row:last-child {
+    border-bottom: none;
+}
+
+.party-member-row:hover {
+    background: #fafafa;
+}
+
+.party-member-avatar {
+    background: #f0f8ff;
+    border: 2px solid #dddbda;
+    border-radius: 50%;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.15s;
+}
+
+.party-member-avatar[data-primary="true"] {
+    border-color: #0176d3;
+    background: rgba(1, 118, 211, 0.08);
+}
+
+.party-member-name {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #032d60;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.primary-badge {
+    background: #0176d3;
+    color: #ffffff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.party-member-email,
+.party-member-phone {
+    font-size: 0.8rem;
+    color: #706e6b;
+}
+
+.remove-btn {
+    color: #ba0517;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+
+.remove-btn:hover {
+    opacity: 1;
+}
+
+/* ── Empty Party State ─────────────────────────────────────── */
+.empty-party-state {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: #706e6b;
+    font-size: 0.875rem;
+}
+
+.empty-party-icon {
+    color: #c9c7c5;
+    margin-bottom: 0.75rem;
+}
+
+/* ── Party Summary ─────────────────────────────────────────── */
+.party-summary {
+    background: #f3f3f3;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dddbda;
+}
+
+.party-count-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #3e3e3c;
+}
+
+.party-count-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0176d3;
+}
+
+/* ── Confirm Button ────────────────────────────────────────── */
+.confirm-section {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.confirm-tour-btn {
+    width: 100%;
+    --sds-c-button-brand-color-background: #0176d3;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.75rem 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .left-panel,
+    .right-panel {
+        width: 100%;
+    }
+    .left-panel {
+        position: static;
+    }
+}
