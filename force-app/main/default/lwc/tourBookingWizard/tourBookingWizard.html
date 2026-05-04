@@ -1,0 +1,73 @@
+<template>
+    <div class="wizard-container">
+        <!-- Step Progress Indicator -->
+        <div class="wizard-header slds-p-horizontal_large slds-p-vertical_medium">
+            <div class="step-indicator slds-grid slds-grid_align-center">
+                <template for:each={steps} for:item="step">
+                    <div
+                        key={step.id}
+                        class={step.cssClass}
+                        data-step={step.id}
+                    >
+                        <div class="step-circle">
+                            <template if:true={step.completed}>
+                                <lightning-icon
+                                    icon-name="utility:check"
+                                    size="x-small"
+                                    alternative-text="Completed"
+                                ></lightning-icon>
+                            </template>
+                            <template if:false={step.completed}>
+                                <span>{step.number}</span>
+                            </template>
+                        </div>
+                        <span class="step-label">{step.label}</span>
+                        <template if:false={step.isLast}>
+                            <div class="step-connector"></div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Step Content -->
+        <div class="wizard-content">
+            <!-- Screen 1: Guest Search -->
+            <template if:true={isStep1}>
+                <c-guest-search
+                    onguest-selected={handleGuestSelected}
+                ></c-guest-search>
+            </template>
+
+            <!-- Screen 2: Guest Itinerary & Tour Availability -->
+            <template if:true={isStep2}>
+                <c-guest-itinerary
+                    selected-guest={selectedGuest}
+                    ontime-slot-selected={handleTimeSlotSelected}
+                    onback={handleBack}
+                ></c-guest-itinerary>
+            </template>
+
+            <!-- Screen 3: Tour Location Modal (overlaid on step 2) -->
+            <template if:true={showLocationModal}>
+                <c-tour-location-modal
+                    selected-time={selectedTimeSlot}
+                    selected-guest={selectedGuest}
+                    onlocation-selected={handleLocationSelected}
+                    oncancel={handleModalCancel}
+                ></c-tour-location-modal>
+            </template>
+
+            <!-- Screen 4: Tour Party Confirmation -->
+            <template if:true={isStep4}>
+                <c-tour-party-confirmation
+                    selected-guest={selectedGuest}
+                    selected-location={selectedLocation}
+                    selected-time-slot={selectedTimeSlot}
+                    onback={handleBack}
+                    ontour-confirmed={handleTourConfirmed}
+                ></c-tour-party-confirmation>
+            </template>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,182 @@
+/* ============================================================
+   Guest Search – Screen 1
+   ============================================================ */
+
+.guest-search-page {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* ── Search Input ──────────────────────────────────────────── */
+.search-input-wrap {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.search-input {
+    border-radius: 24px !important;
+    padding-left: 2.5rem !important;
+    font-size: 1rem;
+    height: 48px;
+    border: 2px solid #dddbda;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus {
+    border-color: #0176d3;
+    box-shadow: 0 0 0 3px rgba(1, 118, 211, 0.2);
+    outline: none;
+}
+
+.search-input-icon {
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0.75rem;
+}
+
+/* ── Action Cards ──────────────────────────────────────────── */
+.action-cards-row {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.action-card {
+    background: #ffffff;
+    border: 2px solid #dddbda;
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    text-align: center;
+    user-select: none;
+}
+
+.action-card:hover,
+.action-card:focus {
+    border-color: #0176d3;
+    box-shadow: 0 4px 12px rgba(1, 118, 211, 0.18);
+    transform: translateY(-2px);
+    outline: none;
+}
+
+.action-card:active {
+    transform: translateY(0);
+}
+
+.action-card__icon-wrap {
+    background: #f0f8ff;
+    border-radius: 50%;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.25rem;
+}
+
+.action-card__title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #032d60;
+}
+
+.action-card__subtitle {
+    font-size: 0.8rem;
+    color: #706e6b;
+}
+
+/* ── Results Table ─────────────────────────────────────────── */
+.results-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #032d60;
+}
+
+.result-subtitle {
+    color: #706e6b;
+    font-size: 0.875rem;
+}
+
+.results-table-wrap {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #dddbda;
+}
+
+.guest-results-table thead tr {
+    background: #f3f3f3;
+}
+
+.guest-results-table thead th {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #444444;
+    padding: 0.75rem 1rem;
+    white-space: nowrap;
+}
+
+.guest-results-table tbody td {
+    padding: 0.6rem 1rem;
+    vertical-align: middle;
+    font-size: 0.875rem;
+}
+
+.guest-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+    color: #032d60;
+}
+
+.guest-name-text {
+    white-space: nowrap;
+}
+
+.address-cell {
+    max-width: 220px;
+    color: #706e6b;
+}
+
+.col-action,
+.action-cell {
+    white-space: nowrap;
+    width: 140px;
+}
+
+.action-cell {
+    padding: 0.4rem 1rem;
+}
+
+.view-btn {
+    --sds-c-button-neutral-color-background: #f3f3f3;
+}
+
+/* ── Empty State ───────────────────────────────────────────── */
+.empty-state-box {
+    background: #ffffff;
+    border: 2px dashed #dddbda;
+    border-radius: 12px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+}
+
+.empty-state-icon {
+    margin-bottom: 0.75rem;
+    color: #c9c7c5;
+}
+
+.empty-state-msg {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #3e3e3c;
+    margin-bottom: 0.25rem;
+}
+
+.empty-state-sub {
+    font-size: 0.875rem;
+    color: #706e6b;
+}

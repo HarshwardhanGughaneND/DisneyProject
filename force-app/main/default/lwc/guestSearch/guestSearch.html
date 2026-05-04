@@ -1,0 +1,203 @@
+<template>
+    <div class="guest-search-page">
+        <!-- ── Search Card ─────────────────────────────────── -->
+        <lightning-card title="Guest Search" icon-name="standard:person_account">
+            <div class="slds-p-horizontal_large slds-p-bottom_large">
+
+                <!-- Global Search Input -->
+                <div class="search-input-wrap slds-m-bottom_medium">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left">
+                            <lightning-icon
+                                icon-name="utility:search"
+                                size="small"
+                                class="slds-icon slds-input__icon slds-input__icon_left search-input-icon"
+                                alternative-text="Search"
+                            ></lightning-icon>
+                            <input
+                                type="text"
+                                class="slds-input search-input"
+                                placeholder="Search Guest (Phone, Name, Email, Address)"
+                                value={searchTerm}
+                                oninput={handleSearchInput}
+                                onkeyup={handleKeyUp}
+                            />
+                            <template if:true={isSearching}>
+                                <lightning-spinner
+                                    alternative-text="Searching..."
+                                    size="small"
+                                    class="slds-input__icon slds-input__icon_right"
+                                ></lightning-spinner>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Cards Row -->
+                <div class="slds-grid slds-gutters slds-grid_align-center action-cards-row slds-m-bottom_medium">
+                    <!-- Tap Card -->
+                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                        <div class="action-card" onclick={handleTapAction} role="button" tabindex="0">
+                            <div class="action-card__icon-wrap">
+                                <lightning-icon
+                                    icon-name="utility:touch_action"
+                                    size="large"
+                                    class="action-card__icon"
+                                    alternative-text="Tap"
+                                ></lightning-icon>
+                            </div>
+                            <div class="action-card__title">Tap</div>
+                            <div class="action-card__subtitle">Tap Guest Media</div>
+                        </div>
+                    </div>
+
+                    <!-- Camera Scan Card -->
+                    <div class="slds-col slds-size_1-of-2 slds-medium-size_1-of-4">
+                        <div class="action-card" onclick={handleCameraAction} role="button" tabindex="0">
+                            <div class="action-card__icon-wrap">
+                                <lightning-icon
+                                    icon-name="utility:photo"
+                                    size="large"
+                                    class="action-card__icon"
+                                    alternative-text="Camera Scan"
+                                ></lightning-icon>
+                            </div>
+                            <div class="action-card__title">Camera Scan</div>
+                            <div class="action-card__subtitle">Scan QR Code or Barcode</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </lightning-card>
+
+        <!-- ── Search Results ─────────────────────────────── -->
+        <template if:true={hasSearched}>
+            <lightning-card class="slds-m-top_medium">
+                <div slot="title">
+                    <span class="results-title">Search Results</span>
+                </div>
+                <div class="slds-p-horizontal_large slds-p-bottom_large">
+
+                    <!-- Result count subtitle -->
+                    <template if:true={hasResults}>
+                        <p class="result-subtitle slds-m-bottom_medium">
+                            Found <strong>{resultCount}</strong> match(es) for
+                            &ldquo;<em>{searchTerm}</em>&rdquo;
+                        </p>
+
+                        <!-- Results Table -->
+                        <div class="results-table-wrap slds-scrollable_x">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped guest-results-table">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th scope="col" class="slds-text-title_caps">Guest Name</th>
+                                        <th scope="col" class="slds-text-title_caps">Email</th>
+                                        <th scope="col" class="slds-text-title_caps">Phone</th>
+                                        <th scope="col" class="slds-text-title_caps">Address</th>
+                                        <th scope="col" class="slds-text-title_caps col-action">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={searchResults} for:item="guest">
+                                        <tr key={guest.id}>
+                                            <td>
+                                                <div class="guest-name-cell">
+                                                    <lightning-icon
+                                                        icon-name="standard:person_account"
+                                                        size="small"
+                                                        class="slds-m-right_x-small"
+                                                        alternative-text="Guest"
+                                                    ></lightning-icon>
+                                                    <span class="guest-name-text">{guest.name}</span>
+                                                </div>
+                                            </td>
+                                            <td class="slds-truncate">{guest.email}</td>
+                                            <td>{guest.phone}</td>
+                                            <td class="slds-truncate address-cell">{guest.address}</td>
+                                            <td class="action-cell">
+                                                <div class="slds-grid slds-gutters_x-small">
+                                                    <div class="slds-col">
+                                                        <lightning-button-icon
+                                                            icon-name="utility:preview"
+                                                            variant="border-filled"
+                                                            alternative-text="View Guest"
+                                                            title="View Guest"
+                                                            data-id={guest.id}
+                                                            onclick={handleViewGuest}
+                                                            class="view-btn"
+                                                        ></lightning-button-icon>
+                                                    </div>
+                                                    <div class="slds-col">
+                                                        <lightning-button
+                                                            label="Select"
+                                                            variant="brand"
+                                                            data-id={guest.id}
+                                                            onclick={handleSelectGuest}
+                                                            class="select-btn"
+                                                        ></lightning-button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </template>
+
+                    <!-- Empty State / No Results -->
+                    <template if:false={hasResults}>
+                        <div class="empty-state-box">
+                            <div class="empty-state-content">
+                                <lightning-icon
+                                    icon-name="utility:search"
+                                    size="medium"
+                                    class="empty-state-icon"
+                                    alternative-text="No results"
+                                ></lightning-icon>
+                                <p class="empty-state-msg">
+                                    No results found for &ldquo;<em>{searchTerm}</em>&rdquo;
+                                </p>
+                                <p class="empty-state-sub">Can&rsquo;t find the guest?</p>
+                                <lightning-button
+                                    label="Create New Guest Record"
+                                    variant="brand"
+                                    icon-name="utility:add"
+                                    onclick={handleCreateGuest}
+                                    class="slds-m-top_small"
+                                ></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+
+                </div>
+            </lightning-card>
+        </template>
+
+        <!-- Initial empty state (not yet searched) -->
+        <template if:false={hasSearched}>
+            <div class="empty-state-box slds-m-top_medium">
+                <div class="empty-state-content">
+                    <lightning-icon
+                        icon-name="standard:person_account"
+                        size="large"
+                        class="empty-state-icon"
+                        alternative-text="Guest"
+                    ></lightning-icon>
+                    <p class="empty-state-msg">Search for a guest to begin booking</p>
+                    <p class="empty-state-sub slds-m-top_x-small">
+                        Can&rsquo;t find the guest?
+                    </p>
+                    <lightning-button
+                        label="Create New Guest Record"
+                        variant="brand"
+                        icon-name="utility:add"
+                        onclick={handleCreateGuest}
+                        class="slds-m-top_small"
+                    ></lightning-button>
+                </div>
+            </div>
+        </template>
+
+    </div>
+</template>

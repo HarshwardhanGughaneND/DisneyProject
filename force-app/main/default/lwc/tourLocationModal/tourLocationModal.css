@@ -1,0 +1,213 @@
+/* ============================================================
+   Tour Location Modal – Screen 3
+   ============================================================ */
+
+/* ── Modal Shell ───────────────────────────────────────────── */
+.tour-location-modal .slds-modal__container {
+    max-width: 600px;
+}
+
+/* ── Custom Header ─────────────────────────────────────────── */
+.modal-header-custom {
+    background: linear-gradient(135deg, #032d60 0%, #0176d3 100%) !important;
+    text-align: left !important;
+    padding: 1.25rem 1.5rem !important;
+}
+
+.modal-title {
+    color: #ffffff !important;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.modal-title-icon {
+    color: rgba(255, 255, 255, 0.85);
+    flex-shrink: 0;
+}
+
+.modal-subtitle {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.8125rem;
+    margin-top: 0.25rem;
+}
+
+/* ── Modal Body ────────────────────────────────────────────── */
+.modal-body {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding: 0 !important;
+}
+
+.modal-loading {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Location List ─────────────────────────────────────────── */
+.location-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.location-item {
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.15s;
+    outline: none;
+}
+
+.location-item:last-child {
+    border-bottom: none;
+}
+
+.location-item:hover {
+    background: #f0f8ff;
+}
+
+.location-item:focus {
+    background: #f0f8ff;
+    box-shadow: inset 0 0 0 2px #0176d3;
+}
+
+.location-item_selected {
+    background: rgba(1, 118, 211, 0.08) !important;
+    border-left: 4px solid #0176d3;
+}
+
+.location-item_selected:hover {
+    background: rgba(1, 118, 211, 0.12) !important;
+}
+
+.location-row-content {
+    padding: 1rem 1.25rem;
+    gap: 0.75rem;
+}
+
+/* Selection indicator */
+.location-select-icon {
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.radio-circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #c9c7c5;
+    background: #ffffff;
+    transition: border-color 0.15s;
+}
+
+.location-item:hover .radio-circle {
+    border-color: #0176d3;
+}
+
+.check-icon {
+    color: #0176d3;
+}
+
+/* Location info */
+.location-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.location-name {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #032d60;
+    margin-bottom: 2px;
+}
+
+.location-area {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #0176d3;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+}
+
+.location-description {
+    font-size: 0.8125rem;
+    color: #706e6b;
+}
+
+/* Available slots badge */
+.location-slots {
+    flex-shrink: 0;
+}
+
+.slots-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #a5d6a7;
+    border-radius: 999px;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.slots-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #2e844a;
+    flex-shrink: 0;
+}
+
+/* Arrow */
+.location-arrow {
+    flex-shrink: 0;
+}
+
+.row-arrow {
+    color: #c9c7c5;
+    transition: color 0.15s;
+}
+
+.location-item:hover .row-arrow,
+.location-item_selected .row-arrow {
+    color: #0176d3;
+}
+
+/* ── No Locations State ────────────────────────────────────── */
+.no-locations-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.no-loc-icon {
+    color: #c9c7c5;
+    margin-bottom: 0.75rem;
+}
+
+.no-loc-msg {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #3e3e3c;
+}
+
+.no-loc-sub {
+    font-size: 0.875rem;
+    color: #706e6b;
+    margin-top: 0.25rem;
+}
+
+/* ── Modal Footer ──────────────────────────────────────────── */
+.modal-footer {
+    justify-content: flex-end;
+    gap: 0.5rem;
+}

@@ -1,0 +1,284 @@
+<template>
+    <div class="tour-party-page">
+
+        <!-- ── Page Header ─────────────────────────────────── -->
+        <div class="page-header slds-m-bottom_medium">
+            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                <div class="slds-col">
+                    <h1 class="page-title">Confirm Tour Party</h1>
+                    <p class="page-subtitle">
+                        {selectedLocationName} &bull; {formattedDate} at {selectedTime}
+                    </p>
+                </div>
+                <div class="slds-col slds-no-flex">
+                    <lightning-button
+                        label="Back"
+                        variant="neutral"
+                        icon-name="utility:back"
+                        onclick={handleBack}
+                    ></lightning-button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Split Layout ────────────────────────────────── -->
+        <div class="split-layout slds-grid slds-gutters">
+
+            <!-- ════════════ LEFT PANEL ════════════ -->
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_5-of-12 left-panel">
+
+                <!-- Search Box -->
+                <lightning-card class="slds-m-bottom_small">
+                    <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+                        <div class="slds-form-element">
+                            <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left">
+                                <lightning-icon
+                                    icon-name="utility:search"
+                                    size="small"
+                                    class="slds-icon slds-input__icon slds-input__icon_left"
+                                    alternative-text="Search"
+                                ></lightning-icon>
+                                <input
+                                    type="text"
+                                    class="slds-input party-search-input"
+                                    placeholder="Search for people..."
+                                    value={partySearchTerm}
+                                    oninput={handlePartySearchInput}
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Quick action buttons -->
+                        <div class="slds-grid slds-gutters_x-small slds-m-top_x-small quick-actions">
+                            <div class="slds-col">
+                                <lightning-button
+                                    label="Tap"
+                                    variant="neutral"
+                                    icon-name="utility:touch_action"
+                                    class="quick-btn"
+                                    onclick={handleTapAction}
+                                ></lightning-button>
+                            </div>
+                            <div class="slds-col">
+                                <lightning-button
+                                    label="Camera"
+                                    variant="neutral"
+                                    icon-name="utility:photo"
+                                    class="quick-btn"
+                                    onclick={handleCameraAction}
+                                ></lightning-button>
+                            </div>
+                        </div>
+                    </div>
+                </lightning-card>
+
+                <!-- Reservation Info Card -->
+                <lightning-card class="reservation-card slds-m-bottom_small" title="Reservation Details" icon-name="utility:event">
+                    <div class="slds-p-horizontal_medium slds-p-bottom_medium reservation-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Location</span>
+                            <span class="detail-value">{selectedLocationName}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Date</span>
+                            <span class="detail-value">{formattedDate}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Time</span>
+                            <span class="detail-value">{selectedTime}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Area</span>
+                            <span class="detail-value">{selectedArea}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Primary Guest</span>
+                            <span class="detail-value detail-value_primary">{primaryGuestName}</span>
+                        </div>
+                    </div>
+                </lightning-card>
+
+                <!-- Household Sections -->
+                <template if:true={isLoadingHousehold}>
+                    <div class="household-loading">
+                        <lightning-spinner alternative-text="Loading household..." size="small"></lightning-spinner>
+                        <span class="slds-m-left_small">Loading household members...</span>
+                    </div>
+                </template>
+
+                <template for:each={householdGroups} for:item="group">
+                    <lightning-card key={group.householdName} class="household-card slds-m-bottom_small">
+                        <div slot="title">
+                            <span class="household-title">{group.householdName}</span>
+                        </div>
+                        <div class="slds-p-horizontal_medium slds-p-bottom_small">
+                            <template if:true={group.hasFilteredMembers}>
+                                <template for:each={group.filteredMembers} for:item="member">
+                                    <div key={member.id} class="member-row slds-grid slds-grid_vertical-align-center">
+                                        <div class="slds-col">
+                                            <div class="member-avatar-row slds-grid slds-grid_vertical-align-center">
+                                                <div class="member-avatar">
+                                                    <lightning-icon
+                                                        icon-name="standard:person_account"
+                                                        size="small"
+                                                        alternative-text="Guest"
+                                                    ></lightning-icon>
+                                                </div>
+                                                <div class="slds-m-left_x-small">
+                                                    <div class="member-name">{member.name}</div>
+                                                    <div class="member-email">{member.email}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="slds-col slds-no-flex member-action">
+                                            <template if:true={member.inParty}>
+                                                <span class="in-party-badge">
+                                                    <lightning-icon
+                                                        icon-name="utility:check"
+                                                        size="xx-small"
+                                                        alternative-text="In party"
+                                                    ></lightning-icon>
+                                                    Added
+                                                </span>
+                                            </template>
+                                            <template if:false={member.inParty}>
+                                                <lightning-button-icon
+                                                    icon-name="utility:add"
+                                                    variant="brand"
+                                                    alternative-text="Add to party"
+                                                    title="Add to party"
+                                                    data-id={member.id}
+                                                    onclick={handleAddMember}
+                                                    class="add-member-btn"
+                                                ></lightning-button-icon>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={group.hasFilteredMembers}>
+                                <p class="no-members-msg">No additional members found.</p>
+                            </template>
+                        </div>
+                    </lightning-card>
+                </template>
+
+                <!-- No household state -->
+                <template if:false={hasHouseholdGroups}>
+                    <template if:false={isLoadingHousehold}>
+                        <div class="no-household-state slds-m-bottom_small">
+                            <p class="no-members-msg">No household members found for this guest.</p>
+                        </div>
+                    </template>
+                </template>
+
+            </div>
+
+            <!-- ════════════ RIGHT PANEL ════════════ -->
+            <div class="slds-col slds-size_1-of-1 slds-medium-size_7-of-12 right-panel">
+                <lightning-card>
+                    <div slot="title">
+                        <div class="slds-grid slds-grid_vertical-align-center">
+                            <lightning-icon
+                                icon-name="utility:people"
+                                size="small"
+                                alternative-text="Tour Party"
+                                class="slds-m-right_x-small"
+                            ></lightning-icon>
+                            <span class="party-panel-title">Tour Party ({partyCount})</span>
+                        </div>
+                    </div>
+
+                    <div class="slds-p-horizontal_large slds-p-bottom_large">
+                        <!-- Party Members List -->
+                        <template if:true={hasTourParty}>
+                            <div class="party-list">
+                                <template for:each={tourParty} for:item="member">
+                                    <div key={member.id} class="party-member-row slds-grid slds-grid_vertical-align-center">
+                                        <!-- Avatar + Info -->
+                                        <div class="slds-col">
+                                            <div class="slds-grid slds-grid_vertical-align-center">
+                                                <div class="party-member-avatar" data-primary={member.isPrimary}>
+                                                    <lightning-icon
+                                                        icon-name="standard:person_account"
+                                                        size="small"
+                                                        alternative-text="Guest"
+                                                    ></lightning-icon>
+                                                </div>
+                                                <div class="slds-m-left_small party-member-info">
+                                                    <div class="party-member-name">
+                                                        {member.name}
+                                                        <template if:true={member.isPrimary}>
+                                                            <span class="primary-badge">Primary</span>
+                                                        </template>
+                                                    </div>
+                                                    <div class="party-member-email">{member.email}</div>
+                                                    <div class="party-member-phone">{member.phone}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Remove Button (not for primary) -->
+                                        <div class="slds-col slds-no-flex">
+                                            <template if:false={member.isPrimary}>
+                                                <lightning-button-icon
+                                                    icon-name="utility:close"
+                                                    variant="bare"
+                                                    alternative-text="Remove from party"
+                                                    title="Remove"
+                                                    data-id={member.id}
+                                                    onclick={handleRemoveMember}
+                                                    class="remove-btn"
+                                                ></lightning-button-icon>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template if:false={hasTourParty}>
+                            <div class="empty-party-state">
+                                <lightning-icon
+                                    icon-name="utility:people"
+                                    size="medium"
+                                    alternative-text="No guests"
+                                    class="empty-party-icon"
+                                ></lightning-icon>
+                                <p>No guests added to the tour party yet.</p>
+                            </div>
+                        </template>
+
+                        <!-- Party Summary -->
+                        <div class="party-summary slds-m-top_medium">
+                            <div class="slds-grid slds-grid_align-spread">
+                                <span class="party-count-label">Total Guests</span>
+                                <span class="party-count-value">{partyCount}</span>
+                            </div>
+                        </div>
+
+                        <!-- Confirm Button -->
+                        <div class="confirm-section slds-m-top_large">
+                            <template if:true={isConfirming}>
+                                <lightning-spinner alternative-text="Confirming tour..." size="small"></lightning-spinner>
+                            </template>
+                            <template if:false={isConfirming}>
+                                <lightning-button
+                                    label="Confirm Tour"
+                                    variant="brand"
+                                    icon-name="utility:check"
+                                    icon-position="left"
+                                    disabled={isConfirmDisabled}
+                                    onclick={handleConfirmTour}
+                                    class="confirm-tour-btn"
+                                ></lightning-button>
+                            </template>
+                        </div>
+
+                    </div>
+                </lightning-card>
+            </div>
+
+        </div>
+    </div>
+</template>

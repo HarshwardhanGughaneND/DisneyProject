@@ -1,0 +1,212 @@
+<template>
+    <div class="guest-itinerary-page">
+
+        <!-- ── Guest Header Card ────────────────────────────── -->
+        <lightning-card class="guest-header-card">
+            <div class="slds-p-horizontal_large slds-p-vertical_medium guest-header-content">
+                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                    <div class="slds-col">
+                        <div class="slds-grid slds-grid_vertical-align-center">
+                            <div class="guest-avatar">
+                                <lightning-icon
+                                    icon-name="standard:person_account"
+                                    size="large"
+                                    alternative-text="Guest"
+                                ></lightning-icon>
+                            </div>
+                            <div class="slds-m-left_medium guest-details">
+                                <h2 class="guest-name">{guestName}</h2>
+                                <div class="guest-meta slds-grid slds-wrap slds-gutters_x-small slds-m-top_x-small">
+                                    <template if:true={guestEmail}>
+                                        <span class="guest-meta-item">
+                                            <lightning-icon icon-name="utility:email" size="xx-small" alternative-text="Email"></lightning-icon>
+                                            <span class="slds-m-left_xx-small">{guestEmail}</span>
+                                        </span>
+                                    </template>
+                                    <template if:true={guestPhone}>
+                                        <span class="guest-meta-item">
+                                            <lightning-icon icon-name="utility:call" size="xx-small" alternative-text="Phone"></lightning-icon>
+                                            <span class="slds-m-left_xx-small">{guestPhone}</span>
+                                        </span>
+                                    </template>
+                                    <template if:true={guestAddress}>
+                                        <span class="guest-meta-item">
+                                            <lightning-icon icon-name="utility:location" size="xx-small" alternative-text="Address"></lightning-icon>
+                                            <span class="slds-m-left_xx-small">{guestAddress}</span>
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-no-flex">
+                        <lightning-button
+                            label="Back to Search"
+                            variant="neutral"
+                            icon-name="utility:back"
+                            onclick={handleBack}
+                        ></lightning-button>
+                    </div>
+                </div>
+            </div>
+        </lightning-card>
+
+        <!-- ── Availability Card ──────────────────────────── -->
+        <lightning-card title="Tour Availability" icon-name="utility:event" class="slds-m-top_medium">
+            <div class="slds-p-horizontal_large slds-p-bottom_large">
+
+                <!-- Area Filter Tabs -->
+                <div class="area-tabs slds-m-bottom_medium">
+                    <template for:each={areaTabs} for:item="tab">
+                        <button
+                            key={tab.value}
+                            class={tab.cssClass}
+                            data-value={tab.value}
+                            onclick={handleAreaTabClick}
+                        >
+                            {tab.label}
+                        </button>
+                    </template>
+                </div>
+
+                <!-- Filters Row: Location Dropdown + Date Picker -->
+                <div class="slds-grid slds-gutters slds-grid_vertical-align-end filters-row slds-m-bottom_medium">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12">
+                        <lightning-combobox
+                            label="Tour Location"
+                            placeholder="All Locations"
+                            value={selectedLocationId}
+                            options={locationOptions}
+                            onchange={handleLocationChange}
+                            class="location-filter"
+                        ></lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-12">
+                        <div class="date-nav slds-grid slds-grid_vertical-align-center slds-gutters_x-small">
+                            <div class="slds-col slds-no-flex">
+                                <lightning-button-icon
+                                    icon-name="utility:chevronleft"
+                                    variant="border"
+                                    alternative-text="Previous Day"
+                                    title="Previous Day"
+                                    onclick={handlePrevDay}
+                                ></lightning-button-icon>
+                            </div>
+                            <div class="slds-col">
+                                <lightning-input
+                                    type="date"
+                                    label="Date"
+                                    value={selectedDate}
+                                    onchange={handleDateChange}
+                                    variant="label-hidden"
+                                ></lightning-input>
+                            </div>
+                            <div class="slds-col slds-no-flex">
+                                <lightning-button-icon
+                                    icon-name="utility:chevronright"
+                                    variant="border"
+                                    alternative-text="Next Day"
+                                    title="Next Day"
+                                    onclick={handleNextDay}
+                                ></lightning-button-icon>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-no-flex">
+                        <lightning-button
+                            label="Refresh"
+                            variant="neutral"
+                            icon-name="utility:refresh"
+                            onclick={loadAvailability}
+                        ></lightning-button>
+                    </div>
+                </div>
+
+                <!-- Timeline Grid -->
+                <div class="timeline-container">
+                    <template if:true={isLoading}>
+                        <div class="timeline-loading">
+                            <lightning-spinner alternative-text="Loading availability..." size="medium"></lightning-spinner>
+                        </div>
+                    </template>
+
+                    <template if:false={isLoading}>
+                        <template if:true={hasSlots}>
+                            <div class="timeline-grid">
+                                <!-- Column headers -->
+                                <div class="timeline-header">
+                                    <div class="timeline-col-time">Time</div>
+                                    <div class="timeline-col-status">Availability</div>
+                                    <div class="timeline-col-location">Location</div>
+                                    <div class="timeline-col-action">Action</div>
+                                </div>
+
+                                <!-- Slot Rows -->
+                                <template for:each={availabilitySlots} for:item="slot">
+                                    <div
+                                        key={slot.id}
+                                        class={slot.rowClass}
+                                        data-id={slot.id}
+                                        data-start-time={slot.startTime}
+                                        data-location-id={slot.locationId}
+                                        onclick={handleSlotClick}
+                                        role="button"
+                                        tabindex="0"
+                                    >
+                                        <!-- Time -->
+                                        <div class="timeline-col-time">
+                                            <span class="slot-time">{slot.startTime}</span>
+                                            <template if:true={slot.endTime}>
+                                                <span class="slot-time-end"> – {slot.endTime}</span>
+                                            </template>
+                                        </div>
+
+                                        <!-- Availability Badge -->
+                                        <div class="timeline-col-status">
+                                            <span class={slot.badgeClass}>
+                                                <span class={slot.dotClass}></span>
+                                                {slot.availabilityLabel}
+                                            </span>
+                                        </div>
+
+                                        <!-- Location -->
+                                        <div class="timeline-col-location">
+                                            <span class="slot-location">{slot.locationName}</span>
+                                            <span class="slot-area">{slot.area}</span>
+                                        </div>
+
+                                        <!-- Action arrow -->
+                                        <div class="timeline-col-action">
+                                            <template if:true={slot.isAvailable}>
+                                                <lightning-icon
+                                                    icon-name="utility:chevronright"
+                                                    size="x-small"
+                                                    alternative-text="Select"
+                                                    class="slot-arrow"
+                                                ></lightning-icon>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template if:false={hasSlots}>
+                            <div class="no-slots-state">
+                                <lightning-icon
+                                    icon-name="utility:event"
+                                    size="large"
+                                    alternative-text="No availability"
+                                    class="no-slots-icon"
+                                ></lightning-icon>
+                                <p class="no-slots-msg">No availability found for the selected date and area.</p>
+                                <p class="no-slots-sub">Try changing the date or area filter.</p>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+
+            </div>
+        </lightning-card>
+    </div>
+</template>
