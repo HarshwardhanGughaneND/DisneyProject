@@ -6,7 +6,7 @@
 **Epic:** DMS-2835 — Business Capabilities | Cast Workflow Management | Tour Booking & Management
 **Related HLD:** DMS-4909 : Tour Slots Generator (High-Level Design)
 **Document Format Reference:** *Ability to Manage Guide License Data* (LLD template)
-**Status:** Draft — pending business confirmation on items listed in Section 19
+**Status:** Draft — Publish confirmed in scope (2026-08-17); pending business confirmation on remaining items listed in Section 19
 
 ---
 
@@ -66,7 +66,7 @@ Enable Business Admins and Operations users to configure and generate a **projec
 
 ### 2.2 Background
 
-This LLD is derived from the DMS-4909 HLD ("Tour Slots Generator") and the story's acceptance criteria (UAC1–UAC19), reconciled against four business decisions confirmed on 2026-08-17:
+This LLD is derived from the DMS-4909 HLD ("Tour Slots Generator") and the story's acceptance criteria (UAC1–UAC19), reconciled against five business decisions confirmed on 2026-08-17:
 
 | # | Question | Business Decision |
 |---|---|---|
@@ -74,6 +74,7 @@ This LLD is derived from the DMS-4909 HLD ("Tour Slots Generator") and the story
 | 2 | Is Lunch Block still in scope? | **Yes** — to be fully specified in this LLD. |
 | 3 | Online Tour Booking toggle behavior | When **unchecked**, the screen shows a single **Tour Slots** view/field (no Online/Onsite split). When **checked**, both **Online** and **Onsite** capacity fields/columns are displayed. |
 | 4 | Is Online ≤ Onsite validation still required? | **Yes.** |
+| 5 | Is "Publish" (persisting records via Batch Apex) in scope for DMS-4909? | **Yes, confirmed in scope.** The Publish action, the `TourSlotGenerationBatch` Batch Apex, and the resulting `Tour_Availability__c` / `Tour_Availability_Slot__c` persistence are all part of this story's delivery. Since the current mock-ups do not show a Publish button/UI, the **UI/UX design and acceptance criteria for the Publish action need to be added** (see Section 19, Item 4) — this LLD proceeds on the assumption that a Publish button/flow will be added to the screen alongside "Generate & Preview Schedule." |
 
 Items raised during HLD review that remain **unanswered** are tracked in Section 19 and have been handled with explicit, clearly-labeled assumptions so this LLD can move forward without blocking development.
 
@@ -144,7 +145,7 @@ Tour_Availability__c    Tour_Availability_Slot__c
 4. Client-side validation runs on every field change; **Generate & Preview Schedule** stays disabled until all required fields are valid (UAC1–UAC3, UAC6, UAC10).
 5. On **Generate & Preview Schedule** click: slot generation logic (Section 10) runs **entirely client-side in the LWC** (no Apex/DML) and renders the Schedule Preview panel in place (UAC17, UAC19).
 6. The preview does **not** persist any records (per story assumption "Schedule Preview is a projection/preview only").
-7. A separate **Publish** action (introduced by the HLD, not present in the current mock-ups — see Section 19, Item 4) invokes `TourAvailabilityGeneratorController.publishSchedule()`, which validates duplicates (Section 10.4) and enqueues `TourSlotGenerationBatch` to persist `Tour_Availability__c` and `Tour_Availability_Slot__c` records asynchronously.
+7. A separate **Publish** action — confirmed in scope for this story (Section 2.2, Decision #5), though not yet reflected in the current mock-ups (UI/UX addition needed, see Section 19, Item 4) — invokes `TourAvailabilityGeneratorController.publishSchedule()`, which validates duplicates (Section 10.4) and enqueues `TourSlotGenerationBatch` to persist `Tour_Availability__c` and `Tour_Availability_Slot__c` records asynchronously.
 8. On batch completion, a success/failure notification is surfaced to the user (Platform Event or polling, per Section 11.3).
 
 ---
@@ -270,7 +271,7 @@ No schema changes required. Referenced read-only by the LWC's Location tree and 
 | Online Tour Booking Enabled | `Online_Tour_Booking_Enabled__c` **[NEW]** | Checkbox | Custom | No (default unchecked) | Edit | Yes | Drives split Onsite/Online capacity capture & display (Business Decision #3) |
 | Total Slots | `Total_Slots__c` | Number(4,0) | Custom | System-calculated | Read | Yes | Count of generated slots for the day |
 | Slot Type | `Slot_Type__c` | Picklist | Custom | Yes | Edit | Yes | Values: `Onsite`, `Event`. This story only creates `Onsite` records; `Event` is populated by the separate Event/Group story sharing this object. |
-| Generation Status | `Generation_Status__c` **[NEW]** | Picklist | Custom | System-managed | Read | Yes | Values: `Published`. (Preview does not create a record; see Section 19, Item 4 for open scope question on whether a `Draft` status is needed.) |
+| Generation Status | `Generation_Status__c` **[NEW]** | Picklist | Custom | System-managed | Read | Yes | Values: `Published`. Preview does not create a record (record only exists once Published, confirmed in scope per Section 2.2, Decision #5). |
 | Location + Date Key | `Location_Date_Key__c` | Text(255), External ID, Unique | Custom | System-managed | Read | No | Composite key (`Location__c` + `Availability_Date__c`) used to enforce the uniqueness constraint (Section 15) |
 
 ### 7.3 Tour_Availability_Slot\_\_c (Existing — Extended)
@@ -539,7 +540,7 @@ These items were raised during HLD review and remain **unanswered**. This LLD ma
 | 1 | Slot Interval vs. Tour Duration semantics (HLD's example is self-contradictory) | Slot Interval = step size between slot starts; Tour Duration = length of each slot (Section 10.1) | Business / HLD author |
 | 2 | Slot generation model: overlapping slots (HLD's literal example) vs. non-overlapping, occupancy-blocked slots (mock-up) | Overlapping slots are generated at every Slot Interval step, each independently capacitated (per flat-capacity model, Business Decision #1) | Business |
 | 3 | Are generated preview slot values editable inline, or strictly read-only? | Read-only preview (Section 3.2, Out of Scope) | Product/UX |
-| 4 | Is "Publish" (persisting records via Batch Apex) in scope for DMS-4909, given the mock-ups show no Publish button? | Assumed **in scope**, since the HLD explicitly designs it; `Generation_Status__c` currently only models `Published`. If Publish is deferred to another story, remove Section 4.2 step 7 and the Batch Apex components from this story's build. | Product/Business |
+| 4 | **[CONFIRMED IN SCOPE — 2026-08-17]** Publish (persisting records via Batch Apex) is in scope for DMS-4909, but the current mock-ups show no Publish button/UI. | Design/build a **Publish button and confirmation UX** (e.g., placement relative to "Generate & Preview Schedule," confirmation dialog, success/failure toast per Section 11.3) and add corresponding acceptance criteria (e.g., "Given a valid preview has been generated, When the user clicks Publish, Then the schedule is persisted asynchronously and a success/failure notification is shown"). This LLD's Section 4.2/7.2/11 already assume Publish is built. | Product/UX (for the missing UI/AC), then Dev |
 | 5 | Does the Schedule Preview render one representative day (per HLD Section 5: "Preview 1 day slot generated on the UI") or every day in the selected range? | One representative day rendered in the LWC preview grid; full range is only materialized at Publish time | Product/UX |
 | 6 | Does `Location__c` already have a Channel/grouping field to support the tree's grouping (Walt Disney World, Disneyland, Aulani, Virtual)? | Assumed to exist as `Channel__c`; not verified against actual org metadata | Salesforce Admin/Architect |
 | 7 | Desired behavior when only part of a multi-day range already has existing `Tour_Availability__c` records | Assumed: block the entire publish and list conflicting Location/Date pairs to the user (no partial publish) | Business |
