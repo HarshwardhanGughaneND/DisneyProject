@@ -107,18 +107,15 @@ This screen is built as a **main container LWC** that composes **three child LWC
 | 3 | `dvcTourSchedulePreviewGrid` | **Child LWC — Schedule Preview Grid.** Renders the generated preview grid (Onsite read-only / Online editable columns) passed down from the container, and emits any per-row Online capacity edits back up to the container. |
 
 ```
-+-------------------------------------------------------------+
-|              dvcTourAvailabilityGenerator (Container LWC)    |
-|                                                               |
-|   +----------------------+  +--------------------------+     |
-|   | dvcTourLocationTree  |  | dvcTourAvailabilityConfig |     |
-|   | (Child LWC)          |  | Form (Child LWC)          |     |
-|   +----------------------+  +--------------------------+     |
-|                                                               |
-|   +-----------------------------------------------------+    |
-|   | dvcTourSchedulePreviewGrid (Child LWC)               |    |
-|   +-----------------------------------------------------+    |
-+-------------------------------------------------------------+
++--------------------------------------------------------------------------------------------+
+|                      dvcTourAvailabilityGenerator (Container LWC)                          |
+|                                                                                            |
+|   +----------------------+  +--------------------------+  +----------------------------+   |
+|   | dvcTourLocationTree  |  | dvcTourAvailabilityConfig|  | dvcTourSchedulePreviewGrid |   |
+|   | (Child LWC)          |  | Form (Child LWC)         |  |        (Child LWC)         |   |
+|   +----------------------+  +--------------------------+  +----------------------------+   |
+|                                                                                            |
++--------------------------------------------------------------------------------------------+
      |                                   |
      | (1) Generate & Preview            | (2) Publish
      | 100% client-side JS,              | Apex call
@@ -136,14 +133,14 @@ This screen is built as a **main container LWC** that composes **three child LWC
      |                        |  (Database.Batchable, bulk-safe DML)  |
      |                        +--------------------------------------+
      |                                            |
-     |                    ----------------------------------------------------
-     |                    |                       |                          |
-     v                    v                       v                          v
-(preview only)  DVC_Tour_Availability__c DVC_Tour_Guide_Shift__c  DVC_Tour_Availability_Slot__c
-                   (1 per Location+Date) (child, per shift)   (child, per generated slot)
+     |                    -----------------------------------------------------------
+     |                    |                              |                          |
+     v                    v                              v                          v
+(preview only)  DVC_Tour_Availability__c        DVC_Tour_Guide_Shift__c  DVC_Tour_Availability_Slot__c
+                (1 per Location+Date+SlotType)  (child, per shift)       (child, per generated slot)
 
 +--------------------------------------+
-|  DVC_TourAvailabilityDailyRolloverJob     |   <- Scheduled Apex, runs every 24 hours
+|  DVC_TourAvailabilityDailyRolloverJob |   <- Scheduled Apex, runs every 24 hours
 |  (Section 12)                         |      independent of the LWC/Publish flow
 +--------------------------------------+
 ```
@@ -437,7 +434,7 @@ The tables below show **actual sample field values** for the records created in 
 
 #### Example 1 — Single Location, Lunch Block enabled, Online Tour Booking disabled
 
-Configuration: Location = *Beach Club* (Resort), Date = 2026-09-01, Opening 08:30 AM–Closing 04:00 PM, one Guide Shift 08:30 AM–04:00 PM with 2 guides, Tour Duration = 90 mins, Slot Interval = 30 mins, Lunch 12:30 PM–01:30 PM, Online Tour Booking = unchecked.
+Configuration: Location = *Beach Club* (Resort), Date = 2026-09-01, Opening 08:30 AM–Closing 04:00 PM, one Guide Shift 08:30 AM–04:00 PM with 2 guides, Tour Duration = 60 mins, Slot Interval = 30 mins, Lunch 12:30 PM–01:30 PM, Online Tour Booking = unchecked.
 
 **`DVC_Tour_Availability__c` (Record `a0X001`):**
 
@@ -447,14 +444,14 @@ Configuration: Location = *Beach Club* (Resort), Date = 2026-09-01, Opening 08:3
 | `DVC_Availability_Date__c` | 2026-09-01 |
 | `DVC_Operating_Start_Time__c` | 08:30 AM |
 | `DVC_Operating_End_Time__c` | 04:00 PM |
-| `DVC_Tour_Duration__c` | 90 |
+| `DVC_Tour_Duration__c` | 60 |
 | `DVC_Slot_Interval__c` | 30 Minutes |
 | `DVC_Lunch_Block_Needed__c` | true |
 | `DVC_Lunch_Start_Time__c` | 12:30 PM |
 | `DVC_Lunch_End_Time__c` | 01:30 PM |
 | `DVC_Online_Tour_Booking_Enabled__c` | false |
 | `DVC_Online_Capacity_Input__c` | *(blank)* |
-| `DVC_Total_Slots__c` | 13 |
+| `DVC_Total_Slots__c` | 14 |
 | `DVC_Slot_Type__c` | Onsite |
 | `DVC_Location_Date_Key__c` | `BeachClub_2026-09-01_Onsite` |
 
@@ -467,18 +464,18 @@ Configuration: Location = *Beach Club* (Resort), Date = 2026-09-01, Opening 08:3
 | `DVC_Shift_End_Time__c` | 04:00 PM |
 | `DVC_Number_of_Guides__c` | 2 |
 
-**`DVC_Tour_Availability_Slot__c` (children of `a0X001`, sample rows):**
+**`DVC_Tour_Availability_Slot__c` (children of `a0X001`, sample rows — with Tour Duration = 60 mins and Slot Interval = 30 mins, guides free up every other 30-minute slot):**
 
 | Slot Start | Slot End | Onsite | Online | Is Lunch | Status* |
 |---|---|---|---|---|---|
-| 2026-09-01 08:30 AM | 2026-09-01 10:00 AM | 2 | 0 | false | Open |
-| 2026-09-01 09:00 AM | 2026-09-01 10:30 AM | 0 | 0 | false | Closed |
-| 2026-09-01 09:30 AM | 2026-09-01 11:00 AM | 0 | 0 | false | Closed |
-| 2026-09-01 10:00 AM | 2026-09-01 11:30 AM | 2 | 0 | false | Open |
-| 2026-09-01 11:30 AM | 2026-09-01 01:00 PM | 0 | 0 | true | Closed |
-| 2026-09-01 12:30 PM | 2026-09-01 02:00 PM | 0 | 0 | true | Closed |
-| 2026-09-01 01:30 PM | 2026-09-01 03:00 PM | 2 | 0 | false | Open |
-| ... *(remaining slots omitted for brevity — 13 total)* | | | | | |
+| 2026-09-01 08:30 AM | 2026-09-01 09:30 AM | 2 | 0 | false | Open |
+| 2026-09-01 09:00 AM | 2026-09-01 10:00 AM | 0 | 0 | false | Closed |
+| 2026-09-01 09:30 AM | 2026-09-01 10:30 AM | 2 | 0 | false | Open |
+| 2026-09-01 11:30 AM | 2026-09-01 12:30 PM | 2 | 0 | false | Open |
+| 2026-09-01 12:00 PM | 2026-09-01 01:00 PM | 0 | 0 | true | Closed |
+| 2026-09-01 12:30 PM | 2026-09-01 01:30 PM | 0 | 0 | true | Closed |
+| 2026-09-01 01:30 PM | 2026-09-01 02:30 PM | 2 | 0 | false | Open |
+| ... *(remaining slots omitted for brevity — 14 total)* | | | | | |
 
 #### Example 2 — Single Location, Online Tour Booking enabled, Duration = Interval (no occupancy blocking)
 
