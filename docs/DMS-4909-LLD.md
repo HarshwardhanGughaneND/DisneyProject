@@ -8,7 +8,7 @@
 
 **Source of Truth for This Revision:** Jira story text (description, Field Inventory, Acceptance Criteria, Business Rules) + the two UI mock-up screenshots
 
-**Status:** Draft — one open item pending business (Section 20, Item 1)
+**Status:** Draft — several open items pending business (see Section 20), including the slot-generation model in Section 10, which is our current working understanding and not yet formally confirmed
 
 ---
 
@@ -338,29 +338,39 @@ VR-01–VR-09 are enforced identically on the client (for responsive UX during p
 
 ### 10.1 Algorithm
 
+> **Corrected model (superseding the original sliding-window approach):** Reverse-engineering the reference mock-up in detail revealed that each generated row is a **fixed-width block of `Slot_Interval`** (e.g., a 30-minute row), tiling the entire operating window — **not** a sliding window sized to the full `Tour_Duration`. `Tour_Duration` only controls how many consecutive rows get blocked (capacity 0) after a tour starts; it does not change a row's own width. The Lunch-overlap check is also evaluated against **each row's own `Slot_Interval`-wide window**, not the full `Tour_Duration` span of a would-be tour. This was validated row-by-row against the mock-up (Section 10.2) and is the model used below and in Section 10.6 — see Section 20 (Items 7–9) for the specific edge cases still pending formal business sign-off.
+
 ```
 FOR EACH selected Location L:
   Guide_Shifts = the configured list of shifts (Shift_Start, Shift_End, Number_of_Guides)
 
-  slotStart = Operating_Start_Time
   nextAvailableTime = Operating_Start_Time   // tracks when guides next free up
+  rowStart = Operating_Start_Time
 
-  WHILE (slotStart + Tour_Duration) <= Operating_End_Time:
-    slotEnd = slotStart + Tour_Duration
+  // Rows are fixed-width blocks of Slot_Interval, tiling the operating window.
+  // ASSUMPTION (pending confirmation, Section 20 Item 7): if (Operating_End_Time -
+  // Operating_Start_Time) is not evenly divisible by Slot_Interval, the trailing
+  // partial block is simply dropped (no row generated for it).
+  WHILE (rowStart + Slot_Interval) <= Operating_End_Time:
+    rowEnd = rowStart + Slot_Interval
 
-    // Determine active shift(s) covering this slot's start time
-    activeShifts = Guide_Shifts WHERE Shift_Start <= slotStart AND slotEnd <= Shift_End
+    // Determine active shift(s) covering this row's start time
+    activeShifts = Guide_Shifts WHERE Shift_Start <= rowStart AND rowStart < Shift_End
     guideCapacity = SUM(Number_of_Guides for activeShifts)   // default: shifts don't overlap; see Section 20, Item 1
 
-    isLunch = Lunch_Block_Needed AND (slotStart < Lunch_End_Time) AND (slotEnd > Lunch_Start_Time)
+    // Lunch check uses the ROW's own Slot_Interval-wide window, NOT the full Tour_Duration
+    isLunchRow = Lunch_Block_Needed AND (rowStart < Lunch_End_Time) AND (rowEnd > Lunch_Start_Time)
 
-    IF guideCapacity == 0 OR isLunch:
+    IF guideCapacity == 0 OR isLunchRow:
       onsiteCapacity = 0
-    ELSE IF slotStart >= nextAvailableTime:
+      // nextAvailableTime is NOT advanced here — a lunch-blocked row does not
+      // count as a tour start, even if guides were otherwise free
+    ELSE IF rowStart >= nextAvailableTime:
       onsiteCapacity = guideCapacity
-      nextAvailableTime = slotStart + Tour_Duration   // guides occupied until this tour completes
+      nextAvailableTime = rowStart + Tour_Duration   // guides occupied for the FULL tour duration,
+                                                      // in clock-time terms, regardless of row width
     ELSE:
-      onsiteCapacity = 0   // guides still occupied by the previous tour
+      onsiteCapacity = 0   // guides still occupied by an earlier tour
 
     onlineCapacity = (Online_Tour_Booking_Enabled AND onsiteCapacity > 0)
                        ? MIN(Online_Capacity_Input, onsiteCapacity)
@@ -371,41 +381,48 @@ FOR EACH selected Location L:
     // picklist values are pending business confirmation (Section 7.4, Section 20 Item 6)
 
     RENDER/CREATE slot:
-      Slot_Start = slotStart, Slot_End = slotEnd,
+      Slot_Start = rowStart, Slot_End = rowEnd,
       Total_Onsite_Capacity = onsiteCapacity,
       Total_Online_Capacity = onlineCapacity,
-      Is_Lunch_Block = isLunch,
+      Is_Lunch_Block = isLunchRow,
       Status = status
 
-    slotStart = slotStart + Slot_Interval
+    rowStart = rowStart + Slot_Interval
 ```
 
-This directly reproduces the behavior confirmed in the mock-ups: a slot only shows non-zero capacity when it aligns with a guide-availability boundary (start of shift, or `Tour_Duration` after the last tour started), and the "0" values are exactly the guide-occupied and lunch-blocked slots.
+This reproduces the behavior confirmed in the mock-ups exactly: a row only shows non-zero capacity when it aligns with a guide-availability boundary (start of shift, or `Tour_Duration` clock-time after the last tour started), and "0" rows are exactly the guide-occupied and lunch-blocked ones.
+
+**Important nuance (flagged for business, Section 20 Item 9):** because the Lunch check only looks at each row's own width, a tour is allowed to **start** in a row that doesn't itself touch the lunch window, even if that tour's full `Tour_Duration` would run through part of the lunch break. For example, with `Tour_Duration` = 90 min and Lunch 12:30–01:30 PM, an 11:30 AM row shows capacity (open) even though that tour would run until 01:00 PM, overlapping lunch. This matches the mock-up exactly, but hasn't been explicitly confirmed as intended business behavior.
 
 ### 10.2 Worked Example
 
-Given: Opening 08:30 AM, Closing 04:00 PM, Tour Duration = 90 mins, Slot Interval = 30 mins, one Guide Shift 08:30 AM–04:00 PM with 2 guides, Lunch 12:30 PM–01:30 PM, Online Tour Booking enabled with Online Capacity input = 1:
+Given: Opening 08:30 AM, Closing 04:00 PM, Tour Duration = 90 mins, Slot Interval = 30 mins, one Guide Shift 08:30 AM–04:00 PM with 2 guides, Lunch 12:30 PM–01:30 PM, Online Tour Booking enabled with Online Capacity input = 1. Each row below is a fixed 30-minute block (per the corrected algorithm, Section 10.1) — this reproduces the reference mock-up exactly:
 
-| Slot Start | Onsite (read-only) | Online (editable, seeded) | Status | Reason |
-|---|---|---|---|---|
-| 08:30 AM | 2 | 1 | Open | Shift start; guides free |
-| 09:00 AM | 0 | 0 | Closed | Guides occupied (tour ends 10:00) |
-| 09:30 AM | 0 | 0 | Closed | Guides occupied |
-| 10:00 AM | 2 | 1 | Open | Guides free again |
-| 10:30 AM | 0 | 0 | Closed | Guides occupied |
-| 11:00 AM | 0 | 0 | Closed | Guides occupied |
-| 11:30 AM | 2 | 1 | Open | Guides free again |
-| 12:00 PM | 0 | 0 | Closed | Overlaps Lunch |
-| 12:30 PM | 0 | 0 | Closed | Overlaps Lunch |
-| 01:00 PM | 0 | 0 | Closed | Overlaps Lunch |
-| 01:30 PM | 2 | 1 | Open | Guides free (occupancy timer resumes after lunch) |
-| ... | ... | ... | ... | ... |
+| Slot Start | Slot End | Onsite (read-only) | Online (editable, seeded) | Is Lunch Row | Status | Reason |
+|---|---|---|---|---|---|---|
+| 08:30 AM | 09:00 AM | 2 | 1 | false | Open | Shift start; guides free |
+| 09:00 AM | 09:30 AM | 0 | 0 | false | Closed | Guides occupied (tour runs until 10:00) |
+| 09:30 AM | 10:00 AM | 0 | 0 | false | Closed | Guides occupied |
+| 10:00 AM | 10:30 AM | 2 | 1 | false | Open | Guides free again |
+| 10:30 AM | 11:00 AM | 0 | 0 | false | Closed | Guides occupied |
+| 11:00 AM | 11:30 AM | 0 | 0 | false | Closed | Guides occupied |
+| 11:30 AM | 12:00 PM | 2 | 1 | false | Open | Guides free; this row itself doesn't touch lunch (see nuance below) |
+| 12:00 PM | 12:30 PM | 0 | 0 | false | Closed | Guides occupied (from 11:30 AM tour) |
+| 12:30 PM | 01:00 PM | 0 | 0 | **true** | Closed | Row overlaps Lunch |
+| 01:00 PM | 01:30 PM | 0 | 0 | **true** | Closed | Row overlaps Lunch (guides technically free, but row itself is a lunch row) |
+| 01:30 PM | 02:00 PM | 2 | 1 | false | Open | Row no longer touches Lunch; guides free |
+| 02:00 PM | 02:30 PM | 0 | 0 | false | Closed | Guides occupied |
+| 02:30 PM | 03:00 PM | 0 | 0 | false | Closed | Guides occupied |
+| 03:00 PM | 03:30 PM | 2 | 1 | false | Open | Guides free again |
+| 03:30 PM | 04:00 PM | 0 | 0 | false | Closed | Guides occupied |
 
-This matches the confirmed mock-up pattern exactly (Section 10.4/UAC13–16 apply the same logic at 15/60-minute increments).
+**15 rows total — 5 Open, 10 Closed (2 of which are explicit Lunch rows).** Note the gap between opens widens from 90 minutes to 120 minutes right at lunch (11:30 AM → 01:30 PM instead of 11:30 AM → 01:00 PM), because the 01:00 PM row itself touches the lunch window and gets suppressed even though guides are technically free at exactly 01:00 PM. Also note the 11:30 AM row is open even though that 90-minute tour will run until 01:00 PM, crossing into the lunch window — see the nuance flagged in Section 10.1 and Section 20, Item 9. The same logic applies identically at 15- and 60-minute increments (UAC13–16); see the full set of Duration × Interval combinations in Section 10.6.
 
 ### 10.3 Lunch Block Handling
 
-A slot is a lunch-block slot whenever its `[Slot_Start, Slot_End)` interval overlaps `[Lunch_Start_Time, Lunch_End_Time)`. It is still generated and shown as a row with 0/0 capacity and `Status = Closed` (UAC7) — never omitted from the grid.
+A row is a lunch-block row whenever **its own fixed `[Slot_Start, Slot_Start + Slot_Interval)` window** overlaps `[Lunch_Start_Time, Lunch_End_Time)` — **not** the full `[Slot_Start, Slot_Start + Tour_Duration)` span of a would-be tour starting there (Section 10.1). It is still generated and shown as a row with 0/0 capacity and `Is_Lunch_Block = true` / `Status = Closed` (UAC7) — never omitted from the grid.
+
+A lunch-block row does **not** advance `nextAvailableTime` — so if guides were technically free entering a lunch row, they remain "free" (from the algorithm's point of view) immediately after the lunch window ends, rather than being pushed further out. This is what produces the pattern in Section 10.2, where the open row right after lunch (01:30 PM) is exactly at the point guides were already free, not delayed further by the lunch block itself.
 
 ### 10.4 Online Capacity Handling
 
@@ -419,11 +436,22 @@ Per Q5, one shared configuration (Locations, dates, hours, shifts, duration, int
 
 ### 10.6 Sample Salesforce Records Created on Publish (Illustrative Examples)
 
-The tables below show **actual sample field values** for the records created in Salesforce once **Publish** is clicked, for three illustrative scenarios. (Record Ids shown are illustrative placeholders, not real Salesforce Ids.)
+The tables below show **actual sample field values** for the records created in Salesforce once **Publish** is clicked, using the **corrected fixed-Interval-width row model** (Section 10.1). All six combinations share the same base configuration — Location = *Beach Club* (Resort), Date = 2026-09-01, Opening 08:30 AM–Closing 04:00 PM, one Guide Shift 08:30 AM–04:00 PM with 2 guides, Lunch Block 12:30 PM–01:30 PM, Online Tour Booking unchecked — varying only `DVC_Tour_Duration__c` and `DVC_Slot_Interval__c` per combo, to illustrate every Duration × Interval pairing supported by the story (UAC12–16). (Record Ids shown are illustrative placeholders, not real Salesforce Ids.) **This model is our current working understanding — it has not yet been formally confirmed by business** (Section 20, Items 7–9).
 
-#### Example 1 — Single Location, Lunch Block enabled, Online Tour Booking disabled
+**Summary across all combinations:**
 
-Configuration: Location = *Beach Club* (Resort), Date = 2026-09-01, Opening 08:30 AM–Closing 04:00 PM, one Guide Shift 08:30 AM–04:00 PM with 2 guides, Tour Duration = 60 mins, Slot Interval = 30 mins, Lunch 12:30 PM–01:30 PM, Online Tour Booking = unchecked.
+| Combo | Tour Duration | Slot Interval | Total Slots | Open | Closed (incl. Lunch rows) |
+|---|---|---|---|---|---|
+| 1 | 90 min | 30 min | 15 | 5 | 10 (2 lunch) |
+| 2 | 60 min | 30 min | 15 | 7 | 8 (2 lunch) |
+| 3 | 90 min | 15 min | 30 | 5 | 25 (4 lunch) |
+| 4 | 60 min | 60 min | 7 ⚠️ | 6 | 1 (1 lunch) |
+| 5 | 60 min | 15 min | 30 | 7 | 23 (4 lunch) |
+| 6 | 90 min | 60 min | 7 ⚠️ | 3 | 4 (1 lunch) |
+
+⚠️ = with a 60-minute Slot Interval, the 7.5-hour operating window (08:30 AM–04:00 PM) doesn't divide evenly, leaving a 30-minute leftover (03:30–04:00 PM) with no slot generated — see Section 20, Item 7.
+
+#### Combo 1 — Tour Duration = 90 min, Slot Interval = 30 min
 
 **`DVC_Tour_Availability__c` (Record `a0X001`):**
 
@@ -433,7 +461,7 @@ Configuration: Location = *Beach Club* (Resort), Date = 2026-09-01, Opening 08:3
 | `DVC_Availability_Date__c` | 2026-09-01 |
 | `DVC_Operating_Start_Time__c` | 08:30 AM |
 | `DVC_Operating_End_Time__c` | 04:00 PM |
-| `DVC_Tour_Duration__c` | 60 |
+| `DVC_Tour_Duration__c` | 90 |
 | `DVC_Slot_Interval__c` | 30 Minutes |
 | `DVC_Lunch_Block_Needed__c` | true |
 | `DVC_Lunch_Start_Time__c` | 12:30 PM |
@@ -442,77 +470,109 @@ Configuration: Location = *Beach Club* (Resort), Date = 2026-09-01, Opening 08:3
 | `DVC_Slot_Type__c` | Onsite |
 | `DVC_Location_Date_Key__c` | `BeachClub_2026-09-01_Onsite` |
 
-**`DVC_Tour_Guide_Shift__c` (Record `a0Y001`, child of `a0X001`):**
+**`DVC_Tour_Guide_Shift__c` (Record `a0Y001`, child of `a0X001`):** `DVC_Shift_Start_Time__c` = 08:30 AM, `DVC_Shift_End_Time__c` = 04:00 PM, `DVC_Number_of_Guides__c` = 2.
 
-| Field | Value |
-|---|---|
-| `DVC_Tour_Availability__c` | `a0X001` |
-| `DVC_Shift_Start_Time__c` | 08:30 AM |
-| `DVC_Shift_End_Time__c` | 04:00 PM |
-| `DVC_Number_of_Guides__c` | 2 |
+**`DVC_Tour_Availability_Slot__c` (children of `a0X001`, all 15 rows):**
 
-**`DVC_Tour_Availability_Slot__c` (children of `a0X001`, sample rows — with Tour Duration = 60 mins and Slot Interval = 30 mins, guides free up every other 30-minute slot):**
+| Slot Start | Slot End | Onsite | Is Lunch | Status* |
+|---|---|---|---|---|
+| 08:30 AM | 09:00 AM | 2 | false | Open |
+| 09:00 AM | 09:30 AM | 0 | false | Closed |
+| 09:30 AM | 10:00 AM | 0 | false | Closed |
+| 10:00 AM | 10:30 AM | 2 | false | Open |
+| 10:30 AM | 11:00 AM | 0 | false | Closed |
+| 11:00 AM | 11:30 AM | 0 | false | Closed |
+| 11:30 AM | 12:00 PM | 2 | false | Open |
+| 12:00 PM | 12:30 PM | 0 | false | Closed |
+| 12:30 PM | 01:00 PM | 0 | true | Closed |
+| 01:00 PM | 01:30 PM | 0 | true | Closed |
+| 01:30 PM | 02:00 PM | 2 | false | Open |
+| 02:00 PM | 02:30 PM | 0 | false | Closed |
+| 02:30 PM | 03:00 PM | 0 | false | Closed |
+| 03:00 PM | 03:30 PM | 2 | false | Open |
+| 03:30 PM | 04:00 PM | 0 | false | Closed |
 
-| Slot Start | Slot End | Onsite | Online | Is Lunch | Status* |
-|---|---|---|---|---|---|
-| 2026-09-01 08:30 AM | 2026-09-01 09:30 AM | 2 | 0 | false | Open |
-| 2026-09-01 09:00 AM | 2026-09-01 10:00 AM | 0 | 0 | false | Closed |
-| 2026-09-01 09:30 AM | 2026-09-01 10:30 AM | 2 | 0 | false | Open |
-| 2026-09-01 11:30 AM | 2026-09-01 12:30 PM | 2 | 0 | false | Open |
-| 2026-09-01 12:00 PM | 2026-09-01 01:00 PM | 0 | 0 | true | Closed |
-| 2026-09-01 12:30 PM | 2026-09-01 01:30 PM | 0 | 0 | true | Closed |
-| 2026-09-01 01:30 PM | 2026-09-01 02:30 PM | 2 | 0 | false | Open |
-| ... *(remaining slots omitted for brevity — 14 total)* | | | | | |
+#### Combo 2 — Tour Duration = 60 min, Slot Interval = 30 min
 
-#### Example 2 — Single Location, Online Tour Booking enabled, Duration = Interval (no occupancy blocking)
+Same `DVC_Tour_Availability__c` fields as Combo 1 except `DVC_Tour_Duration__c` = **60** and `DVC_Slot_Interval__c` = 30 Minutes (unchanged).
 
-Configuration: Location = *Boardwalk Villas* (Resort), Date = 2026-09-02, Opening 09:00 AM–Closing 05:00 PM, one Guide Shift 09:00 AM–05:00 PM with 3 guides, Tour Duration = 60 mins, Slot Interval = 60 mins, no Lunch Block, Online Tour Booking = checked with Online Capacity input = 1.
+**`DVC_Tour_Availability_Slot__c` (all 15 rows):**
 
-**`DVC_Tour_Availability__c` (Record `a0X002`):**
+| Slot Start | Slot End | Onsite | Is Lunch | Status* |
+|---|---|---|---|---|
+| 08:30 AM | 09:00 AM | 2 | false | Open |
+| 09:00 AM | 09:30 AM | 0 | false | Closed |
+| 09:30 AM | 10:00 AM | 2 | false | Open |
+| 10:00 AM | 10:30 AM | 0 | false | Closed |
+| 10:30 AM | 11:00 AM | 2 | false | Open |
+| 11:00 AM | 11:30 AM | 0 | false | Closed |
+| 11:30 AM | 12:00 PM | 2 | false | Open |
+| 12:00 PM | 12:30 PM | 0 | false | Closed |
+| 12:30 PM | 01:00 PM | 0 | true | Closed |
+| 01:00 PM | 01:30 PM | 0 | true | Closed |
+| 01:30 PM | 02:00 PM | 2 | false | Open |
+| 02:00 PM | 02:30 PM | 0 | false | Closed |
+| 02:30 PM | 03:00 PM | 2 | false | Open |
+| 03:00 PM | 03:30 PM | 0 | false | Closed |
+| 03:30 PM | 04:00 PM | 2 | false | Open |
 
-| Field | Value |
-|---|---|
-| `DVC_Tour_Location__c` | Boardwalk Villas (Resort) |
-| `DVC_Availability_Date__c` | 2026-09-02 |
-| `DVC_Operating_Start_Time__c` | 09:00 AM |
-| `DVC_Operating_End_Time__c` | 05:00 PM |
-| `DVC_Tour_Duration__c` | 60 |
-| `DVC_Slot_Interval__c` | 60 Minutes |
-| `DVC_Lunch_Block_Needed__c` | false |
-| `DVC_Online_Tour_Booking_Enabled__c` | true |
-| `DVC_Slot_Type__c` | Onsite |
-| `DVC_Location_Date_Key__c` | `BoardwalkVillas_2026-09-02_Onsite` |
+#### Combo 3 — Tour Duration = 90 min, Slot Interval = 15 min
 
-**`DVC_Tour_Guide_Shift__c` (Record `a0Y002`, child of `a0X002`):**
+Same `DVC_Tour_Availability__c` fields as Combo 1 except `DVC_Tour_Duration__c` = 90 (unchanged) and `DVC_Slot_Interval__c` = **15 Minutes**.
 
-| Field | Value |
-|---|---|
-| `DVC_Shift_Start_Time__c` | 09:00 AM |
-| `DVC_Shift_End_Time__c` | 05:00 PM |
-| `DVC_Number_of_Guides__c` | 3 |
+**`DVC_Tour_Availability_Slot__c` (30 rows total):** Open rows (Onsite = 2) occur at **08:30, 10:00, 11:30 AM, 01:30 PM, and 03:00 PM** — the same clock times as Combo 1, since the actual tour-start cadence is driven by Tour Duration, not by how finely the day is sliced into rows. All other rows are Closed (Onsite = 0), including four consecutive Lunch rows at **12:30, 12:45, 01:00, and 01:15 PM** (`Is Lunch` = true).
 
-**`DVC_Tour_Availability_Slot__c` (children of `a0X002`, sample rows — since Tour Duration = Slot Interval, every slot is Open):**
+#### Combo 4 — Tour Duration = 60 min, Slot Interval = 60 min ⚠️
 
-| Slot Start | Slot End | Onsite | Online | Is Lunch | Status* |
-|---|---|---|---|---|---|
-| 2026-09-02 09:00 AM | 2026-09-02 10:00 AM | 3 | 1 | false | Open |
-| 2026-09-02 10:00 AM | 2026-09-02 11:00 AM | 3 | 1 | false | Open |
-| 2026-09-02 11:00 AM | 2026-09-02 12:00 PM | 3 | 1 | false | Open |
-| ... *(remaining 5 slots follow the same pattern — 8 total)* | | | | | |
+Same `DVC_Tour_Availability__c` fields as Combo 1 except `DVC_Tour_Duration__c` = **60** and `DVC_Slot_Interval__c` = **60 Minutes**. Only **7 rows** are generated (the 03:30–04:00 PM leftover doesn't fit a full 60-minute row — Section 20, Item 7).
 
-#### Example 3 — Multi-Location Publish (same shared configuration, two locations, same date)
+| Slot Start | Slot End | Onsite | Is Lunch | Status* |
+|---|---|---|---|---|
+| 08:30 AM | 09:30 AM | 2 | false | Open |
+| 09:30 AM | 10:30 AM | 2 | false | Open |
+| 10:30 AM | 11:30 AM | 2 | false | Open |
+| 11:30 AM | 12:30 PM | 2 | false | Open |
+| 12:30 PM | 01:30 PM | 0 | true | Closed |
+| 01:30 PM | 02:30 PM | 2 | false | Open |
+| 02:30 PM | 03:30 PM | 2 | false | Open |
 
-Same configuration as Example 1, but with **both** *Beach Club* and *Boardwalk Villas* selected together for Date = 2026-09-01. Per Section 10.5, one shared configuration produces **two separate `DVC_Tour_Availability__c` records** (one per Location), each with its own children:
+Here the Lunch window (12:30–01:30 PM) happens to align exactly with one full 60-minute row, so it cleanly knocks out exactly one row with no spillover into neighboring rows.
 
-| Field | Record `a0X003` | Record `a0X004` |
+#### Combo 5 — Tour Duration = 60 min, Slot Interval = 15 min
+
+Same `DVC_Tour_Availability__c` fields as Combo 1 except `DVC_Tour_Duration__c` = **60** and `DVC_Slot_Interval__c` = **15 Minutes**.
+
+**`DVC_Tour_Availability_Slot__c` (30 rows total):** Open rows (Onsite = 2) occur at **08:30, 09:30, 10:30, 11:30 AM, 01:30, 02:30, and 03:30 PM** (7 opens). The would-be 12:30 PM open is suppressed by the four consecutive Lunch rows (**12:30, 12:45, 01:00, 01:15 PM**, `Is Lunch` = true), with no compensating delay afterward since guides were already idle through the whole lunch window.
+
+#### Combo 6 — Tour Duration = 90 min, Slot Interval = 60 min ⚠️
+
+Same `DVC_Tour_Availability__c` fields as Combo 1 except `DVC_Tour_Duration__c` = 90 (unchanged) and `DVC_Slot_Interval__c` = **60 Minutes**. Only **7 rows** are generated (same leftover-block edge case as Combo 4 — Section 20, Item 7).
+
+| Slot Start | Slot End | Onsite | Is Lunch | Status* |
+|---|---|---|---|---|
+| 08:30 AM | 09:30 AM | 2 | false | Open |
+| 09:30 AM | 10:30 AM | 0 | false | Closed |
+| 10:30 AM | 11:30 AM | 2 | false | Open |
+| 11:30 AM | 12:30 PM | 0 | false | Closed |
+| 12:30 PM | 01:30 PM | 0 | true | Closed |
+| 01:30 PM | 02:30 PM | 2 | false | Open |
+| 02:30 PM | 03:30 PM | 0 | false | Closed |
+
+This is the one combination where Lunch has a compounding effect: without Lunch, there would be 4 opens (08:30, 10:30, 12:30, 02:30); with Lunch, the would-be 12:30 PM open is suppressed, and the delayed restart at 01:30 PM means the day ends with only 3 opens instead of 4.
+
+#### Multi-Location Publish (same shared configuration, two locations, same date)
+
+Using Combo 1's configuration, but with **both** *Beach Club* and *Boardwalk Villas* selected together for Date = 2026-09-01. Per Section 10.5, one shared configuration produces **two separate `DVC_Tour_Availability__c` records** (one per Location), each with its own children:
+
+| Field | Record `a0X007` | Record `a0X008` |
 |---|---|---|
 | `DVC_Tour_Location__c` | Beach Club (Resort) | Boardwalk Villas (Resort) |
 | `DVC_Availability_Date__c` | 2026-09-01 | 2026-09-01 |
 | `DVC_Slot_Type__c` | Onsite | Onsite |
 | `DVC_Location_Date_Key__c` | `BeachClub_2026-09-01_Onsite` | `BoardwalkVillas_2026-09-01_Onsite` |
-| *(all other fields)* | identical to Example 1 | identical to Example 1 |
+| *(all other fields)* | identical to Combo 1 | identical to Combo 1 |
 
-Each of `a0X003` and `a0X004` gets its own `DVC_Tour_Guide_Shift__c` and `DVC_Tour_Availability_Slot__c` children, generated independently but from the same shared configuration — illustrating why `DVC_Location_Date_Key__c` must include `DVC_Slot_Type__c` in addition to Location + Date (Section 15): the same Location + Date could otherwise collide once a second Slot Type (e.g., `Event`, from the separate Event/Group story) is published against it.
+Each of `a0X007` and `a0X008` gets its own `DVC_Tour_Guide_Shift__c` and `DVC_Tour_Availability_Slot__c` children (the same 15-row pattern as Combo 1), generated independently but from the same shared configuration — illustrating why `DVC_Location_Date_Key__c` must include `DVC_Slot_Type__c` in addition to Location + Date (Section 15): the same Location + Date could otherwise collide once a second Slot Type (e.g., `Event`, from the separate Event/Group story) is published against it.
 
 *\*Status values shown as `Open`/`Closed` for illustration only — final `DVC_Slot_Status__c` picklist values are pending business confirmation (Section 7.4, Section 20 Item 6).*
 
@@ -658,6 +718,9 @@ Use custom report types on `DVC_Tour_Availability__c` with related `DVC_Tour_Gui
 | 4 | Whether Online Capacity input applies as a single flat value across all non-zero slots, or should support different values across the day | Single flat value seeded across all non-zero slots, then individually editable per row post-generation (Section 10.4) | Product (can revisit if business wants per-shift online defaults) |
 | 5 | Will there ever be a Location record of type `Virtual`? As of now, no `Virtual`-type Location records are being created in the org. | Assumed out of practical scope for now since no such records exist; the Tour Location tree/lookup filter (Section 7.1/7.2) does not need to specifically handle `Virtual` until confirmed otherwise | Business |
 | 6 | Exact `DVC_Slot_Status__c` picklist values (Section 7.4) | Assumed `Available` / `Booked`; unclear whether a distinct value is needed for zero-capacity (guide-occupied/lunch-blocked) slots | Business |
+| 7 | Should Slot Interval always evenly divide the Operating Hours window? With a 60-minute interval over a 7.5-hour day (08:30 AM–04:00 PM), there's a 30-minute leftover (03:30–04:00 PM) that doesn't fit a full row (Section 10.6, Combos 4 & 6) | Trailing partial block is simply dropped (no slot generated for it); no validation currently blocks this combination | Business — question drafted, not yet formally asked/answered |
+| 8 | Are all combinations of Tour Duration and Slot Interval valid, including when Tour Duration is not an exact multiple of Slot Interval (e.g., 90 min duration with a 60-minute interval)? | Currently allowed; the algorithm (Section 10.1) handles it correctly via clock-time occupancy tracking, but this hasn't been confirmed as an intended supported combination vs. one that should be restricted by validation | Business — question drafted, not yet formally asked/answered |
+| 9 | Should a tour be allowed to start if it would run into/through the Lunch Block? (E.g., a 90-minute tour starting 11:30 AM with Lunch 12:30–01:30 PM runs until 01:00 PM, crossing into lunch — the mock-up shows this as allowed.) | Currently allowed, since the Lunch check only applies to each row's own width, not the full tour span (Section 10.1, Section 10.3) | Business — question drafted, not yet formally asked/answered |
 
 ---
 
