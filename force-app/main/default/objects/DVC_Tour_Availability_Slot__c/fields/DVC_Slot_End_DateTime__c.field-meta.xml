@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DVC_Slot_End_DateTime__c</fullName>
+    <label>Slot End</label>
+    <type>DateTime</type>
+    <required>true</required>
+    <description>Slot Start + parent DVC_Slot_Interval__c (a fixed-width row, not the full Tour Duration window). See LLD Section 10.1.</description>
+</CustomField>

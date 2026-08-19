@@ -1,0 +1,128 @@
+<template>
+    <div class="slds-p-around_small">
+        <h2 class="slds-text-heading_small">Tour Availability Generator</h2>
+        <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">Configure slots and guide parameters</p>
+
+        <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_small">
+            <div class="slds-col slds-size_1-of-2">
+                <lightning-input type="date" label="Start Date" required onchange={handleStartDateChange}></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-2">
+                <lightning-input type="date" label="End Date" required onchange={handleEndDateChange}></lightning-input>
+            </div>
+        </div>
+
+        <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_small">
+            <div class="slds-col slds-size_1-of-2">
+                <lightning-input type="time" label="Opening Time" required onchange={handleOpeningTimeChange}></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-2">
+                <lightning-input type="time" label="Closing Time" required onchange={handleClosingTimeChange}></lightning-input>
+            </div>
+        </div>
+
+        <div class="slds-m-bottom_small">
+            <p class="slds-text-title_caps slds-text-color_weak slds-m-bottom_x-small">Guide Shifts</p>
+            <template for:each={guideShifts} for:item="shift">
+                <div key={shift.key} class="slds-grid slds-gutters slds-wrap slds-align-bottom slds-m-bottom_x-small">
+                    <div class="slds-col slds-size_1-of-3">
+                        <lightning-input
+                            type="time"
+                            label="Shift Start"
+                            data-key={shift.key}
+                            value={shift.shiftStartTime}
+                            onchange={handleShiftStartChange}
+                        ></lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-3">
+                        <lightning-input
+                            type="time"
+                            label="Shift End"
+                            data-key={shift.key}
+                            value={shift.shiftEndTime}
+                            onchange={handleShiftEndChange}
+                        ></lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-4">
+                        <lightning-input
+                            type="number"
+                            label="Guides"
+                            min="1"
+                            data-key={shift.key}
+                            value={shift.numberOfGuides}
+                            onchange={handleShiftGuidesChange}
+                        ></lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-12">
+                        <lightning-button-icon
+                            icon-name="utility:delete"
+                            variant="border-filled"
+                            alternative-text="Remove shift"
+                            title="Remove shift"
+                            data-key={shift.key}
+                            disabled={disableRemoveShift}
+                            onclick={handleRemoveShift}
+                        ></lightning-button-icon>
+                    </div>
+                </div>
+            </template>
+            <lightning-button
+                label="+ Add Shift"
+                icon-name="utility:add"
+                variant="neutral"
+                class="slds-m-top_x-small"
+                onclick={handleAddShift}
+            ></lightning-button>
+        </div>
+
+        <div class="slds-m-bottom_small">
+            <lightning-input type="toggle" label="Lunch Block Needed?" onchange={handleLunchToggleChange}></lightning-input>
+            <template if:true={showLunchFields}>
+                <div class="slds-grid slds-gutters slds-wrap slds-m-top_x-small">
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input type="time" label="Lunch Start" required onchange={handleLunchStartChange}></lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-2">
+                        <lightning-input type="time" label="Lunch End" required onchange={handleLunchEndChange}></lightning-input>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <div class="slds-m-bottom_small">
+            <lightning-input type="toggle" label="Online Tour Booking" onchange={handleOnlineToggleChange}></lightning-input>
+        </div>
+
+        <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_small">
+            <div class="slds-col slds-size_1-of-2">
+                <lightning-input
+                    type="number"
+                    label="Tour Duration (mins)"
+                    value={tourDurationMinutes}
+                    min="1"
+                    required
+                    onchange={handleDurationChange}
+                ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-2">
+                <lightning-combobox
+                    label="Tour Slot Increment"
+                    value={slotInterval}
+                    options={slotIntervalOptions}
+                    onchange={handleSlotIntervalChange}
+                ></lightning-combobox>
+            </div>
+        </div>
+
+        <template if:true={showOnlineCapacityField}>
+            <div class="slds-m-bottom_small">
+                <lightning-input
+                    type="number"
+                    label="Online Capacity"
+                    min="0"
+                    onchange={handleOnlineCapacityChange}
+                ></lightning-input>
+            </div>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Tour Guide Shift</label>
+    <pluralLabel>Tour Guide Shifts</pluralLabel>
+    <nameField>
+        <type>AutoNumber</type>
+        <label>Tour Guide Shift Name</label>
+        <displayFormat>TGS-{0000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ControlledByParent</sharingModel>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <description>DMS-4909: Represents one configured guide shift (time range + guide count) under a DVC_Tour_Availability__c record. Supports the repeatable &quot;Add Shift&quot; UI. See LLD docs/DMS-4909-LLD.md Section 7.3.</description>
+</CustomObject>

@@ -1,0 +1,13 @@
+.dvc-slot-open {
+    border-left-color: #2e844a;
+    border-left-width: 4px;
+    border-left-style: solid;
+    padding-left: 0.5rem;
+}
+
+.dvc-slot-closed {
+    border-left-color: #dd7a01;
+    border-left-width: 4px;
+    border-left-style: solid;
+    padding-left: 0.5rem;
+}

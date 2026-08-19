@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DVC_Operating_End_Time__c</fullName>
+    <label>Operating End Time</label>
+    <type>Time</type>
+    <required>true</required>
+    <description>Closing time for the location on this date. Must be later than Operating Start Time (VR-04).</description>
+</CustomField>

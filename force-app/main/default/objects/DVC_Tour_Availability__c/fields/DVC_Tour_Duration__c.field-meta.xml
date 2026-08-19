@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DVC_Tour_Duration__c</fullName>
+    <label>Tour Duration (Minutes)</label>
+    <type>Number</type>
+    <precision>4</precision>
+    <scale>0</scale>
+    <required>true</required>
+    <defaultValue>60</defaultValue>
+    <description>Length of a single tour, in minutes. Drives guide-occupancy windows in the slot generation algorithm (LLD Section 10.1). Must be greater than zero (VR-08).</description>
+</CustomField>
