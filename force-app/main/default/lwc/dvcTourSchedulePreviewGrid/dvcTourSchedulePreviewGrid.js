@@ -9,7 +9,9 @@ import { LightningElement, api } from 'lwc';
  * Emits `onlinecapacitychange` when the admin edits a row's Online value.
  */
 export default class DvcTourSchedulePreviewGrid extends LightningElement {
-    @api onlineEnabled = false;
+    // NOTE: cannot be named "onlineEnabled" (or anything starting with "on") - LWC reserves
+    // that prefix for event handlers on public/@api properties (build error LWC1108).
+    @api isOnlineBookingEnabled = false;
 
     _slots = [];
 
@@ -23,7 +25,10 @@ export default class DvcTourSchedulePreviewGrid extends LightningElement {
 
     handleOnlineCapacityChange(event) {
         const rowKey = event.target.dataset.key;
-        const newValue = Number(event.target.value);
+        const parsedValue = Number(event.target.value);
+        // Guard against NaN (e.g. an invalid/partial numeric entry) so it never propagates
+        // through to the container's clamp logic and renders as a blank/NaN input.
+        const newValue = Number.isNaN(parsedValue) ? 0 : parsedValue;
         this.dispatchEvent(
             new CustomEvent('onlinecapacitychange', {
                 detail: { key: rowKey, onlineCapacity: newValue }
@@ -38,7 +43,13 @@ export default class DvcTourSchedulePreviewGrid extends LightningElement {
     get rowsForDisplay() {
         return this._slots.map((slot) => ({
             ...slot,
-            rowClass: `slds-border_left dvc-slot-row ${slot.onsiteCapacity > 0 ? 'dvc-slot-open' : 'dvc-slot-closed'}`
+            rowClass: `slds-border_left dvc-slot-row ${slot.onsiteCapacity > 0 ? 'dvc-slot-open' : 'dvc-slot-closed'}`,
+            // Per-row accessible labels (rather than the shared "Onsite"/"Online"/"Tour Slots"
+            // column label alone) so screen-reader users can distinguish which time each input
+            // belongs to.
+            onsiteAriaLabel: `Onsite capacity at ${slot.startLabel}`,
+            onlineAriaLabel: `Online capacity at ${slot.startLabel}`,
+            tourSlotsAriaLabel: `Tour slots at ${slot.startLabel}`
         }));
     }
 }

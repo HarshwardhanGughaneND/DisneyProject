@@ -3,6 +3,7 @@
     <fullName>DVC_Slot_Type__c</fullName>
     <label>Slot Type</label>
     <type>Picklist</type>
+    <trackHistory>true</trackHistory>
     <required>true</required>
     <valueSet>
         <restricted>true</restricted>

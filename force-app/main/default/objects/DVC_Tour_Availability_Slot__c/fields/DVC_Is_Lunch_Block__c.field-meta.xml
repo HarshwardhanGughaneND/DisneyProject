@@ -3,6 +3,7 @@
     <fullName>DVC_Is_Lunch_Block__c</fullName>
     <label>Is Lunch Block</label>
     <type>Checkbox</type>
+    <trackHistory>true</trackHistory>
     <defaultValue>false</defaultValue>
     <description>True when THIS ROW&apos;s own [Slot Start, Slot Start + Slot Interval) window overlaps the parent&apos;s Lunch window - not when the full Tour Duration span would overlap. See LLD Section 10.1/10.3.</description>
 </CustomField>

@@ -3,6 +3,7 @@
     <fullName>DVC_Operating_Start_Time__c</fullName>
     <label>Operating Start Time</label>
     <type>Time</type>
+    <trackHistory>true</trackHistory>
     <required>true</required>
     <description>Opening time for the location on this date. Must be earlier than Operating End Time (VR-04).</description>
 </CustomField>

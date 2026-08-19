@@ -5,19 +5,47 @@
 
         <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_small">
             <div class="slds-col slds-size_1-of-2">
-                <lightning-input type="date" label="Start Date" required onchange={handleStartDateChange}></lightning-input>
+                <lightning-input
+                    type="date"
+                    label="Start Date"
+                    data-field="startDate"
+                    value={startDate}
+                    required
+                    onchange={handleStartDateChange}
+                ></lightning-input>
             </div>
             <div class="slds-col slds-size_1-of-2">
-                <lightning-input type="date" label="End Date" required onchange={handleEndDateChange}></lightning-input>
+                <lightning-input
+                    type="date"
+                    label="End Date"
+                    data-field="endDate"
+                    value={endDate}
+                    required
+                    onchange={handleEndDateChange}
+                ></lightning-input>
             </div>
         </div>
 
         <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_small">
             <div class="slds-col slds-size_1-of-2">
-                <lightning-input type="time" label="Opening Time" required onchange={handleOpeningTimeChange}></lightning-input>
+                <lightning-input
+                    type="time"
+                    label="Opening Time"
+                    data-field="operatingStartTime"
+                    value={operatingStartTime}
+                    required
+                    onchange={handleOpeningTimeChange}
+                ></lightning-input>
             </div>
             <div class="slds-col slds-size_1-of-2">
-                <lightning-input type="time" label="Closing Time" required onchange={handleClosingTimeChange}></lightning-input>
+                <lightning-input
+                    type="time"
+                    label="Closing Time"
+                    data-field="operatingEndTime"
+                    value={operatingEndTime}
+                    required
+                    onchange={handleClosingTimeChange}
+                ></lightning-input>
             </div>
         </div>
 
@@ -28,8 +56,9 @@
                     <div class="slds-col slds-size_1-of-3">
                         <lightning-input
                             type="time"
-                            label="Shift Start"
+                            label={shift.shiftStartLabel}
                             data-key={shift.key}
+                            data-field="shiftStart"
                             value={shift.shiftStartTime}
                             onchange={handleShiftStartChange}
                         ></lightning-input>
@@ -37,8 +66,9 @@
                     <div class="slds-col slds-size_1-of-3">
                         <lightning-input
                             type="time"
-                            label="Shift End"
+                            label={shift.shiftEndLabel}
                             data-key={shift.key}
+                            data-field="shiftEnd"
                             value={shift.shiftEndTime}
                             onchange={handleShiftEndChange}
                         ></lightning-input>
@@ -46,9 +76,10 @@
                     <div class="slds-col slds-size_1-of-4">
                         <lightning-input
                             type="number"
-                            label="Guides"
+                            label={shift.guidesLabel}
                             min="1"
                             data-key={shift.key}
+                            data-field="guides"
                             value={shift.numberOfGuides}
                             onchange={handleShiftGuidesChange}
                         ></lightning-input>
@@ -76,21 +107,47 @@
         </div>
 
         <div class="slds-m-bottom_small">
-            <lightning-input type="toggle" label="Lunch Block Needed?" onchange={handleLunchToggleChange}></lightning-input>
+            <lightning-input
+                type="toggle"
+                label="Lunch Block Needed?"
+                data-field="lunchBlockNeeded"
+                checked={lunchBlockNeeded}
+                onchange={handleLunchToggleChange}
+            ></lightning-input>
             <template if:true={showLunchFields}>
                 <div class="slds-grid slds-gutters slds-wrap slds-m-top_x-small">
                     <div class="slds-col slds-size_1-of-2">
-                        <lightning-input type="time" label="Lunch Start" required onchange={handleLunchStartChange}></lightning-input>
+                        <lightning-input
+                            type="time"
+                            label="Lunch Start"
+                            data-field="lunchStartTime"
+                            value={lunchStartTime}
+                            required
+                            onchange={handleLunchStartChange}
+                        ></lightning-input>
                     </div>
                     <div class="slds-col slds-size_1-of-2">
-                        <lightning-input type="time" label="Lunch End" required onchange={handleLunchEndChange}></lightning-input>
+                        <lightning-input
+                            type="time"
+                            label="Lunch End"
+                            data-field="lunchEndTime"
+                            value={lunchEndTime}
+                            required
+                            onchange={handleLunchEndChange}
+                        ></lightning-input>
                     </div>
                 </div>
             </template>
         </div>
 
         <div class="slds-m-bottom_small">
-            <lightning-input type="toggle" label="Online Tour Booking" onchange={handleOnlineToggleChange}></lightning-input>
+            <lightning-input
+                type="toggle"
+                label="Online Tour Booking"
+                data-field="onlineTourBookingEnabled"
+                checked={onlineTourBookingEnabled}
+                onchange={handleOnlineToggleChange}
+            ></lightning-input>
         </div>
 
         <div class="slds-grid slds-gutters slds-wrap slds-m-bottom_small">
@@ -98,6 +155,7 @@
                 <lightning-input
                     type="number"
                     label="Tour Duration (mins)"
+                    data-field="tourDurationMinutes"
                     value={tourDurationMinutes}
                     min="1"
                     required
@@ -107,6 +165,7 @@
             <div class="slds-col slds-size_1-of-2">
                 <lightning-combobox
                     label="Tour Slot Increment"
+                    data-field="slotInterval"
                     value={slotInterval}
                     options={slotIntervalOptions}
                     onchange={handleSlotIntervalChange}
@@ -119,6 +178,8 @@
                 <lightning-input
                     type="number"
                     label="Online Capacity"
+                    data-field="onlineCapacityInput"
+                    value={onlineCapacityInput}
                     min="0"
                     onchange={handleOnlineCapacityChange}
                 ></lightning-input>

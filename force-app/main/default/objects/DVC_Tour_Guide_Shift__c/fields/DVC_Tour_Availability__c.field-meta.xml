@@ -3,6 +3,7 @@
     <fullName>DVC_Tour_Availability__c</fullName>
     <label>Tour Availability</label>
     <type>MasterDetail</type>
+    <trackHistory>true</trackHistory>
     <referenceTo>DVC_Tour_Availability__c</referenceTo>
     <relationshipName>DVC_Tour_Guide_Shifts</relationshipName>
     <relationshipLabel>Tour Guide Shifts</relationshipLabel>

@@ -58,6 +58,15 @@ export default class DvcTourAvailabilityGenerator extends LightningElement {
     }
 
     async handlePublishClick() {
+        const configForm = this.template.querySelector('c-dvc-tour-availability-config-form');
+        if (this.selectedLocationIds.length === 0) {
+            this.showToast('Error', 'Select at least one Tour Location to continue.', 'error');
+            return;
+        }
+        if (configForm && !configForm.reportValidity()) {
+            return;
+        }
+
         const request = this.buildPublishRequest();
 
         this.isPublishing = true;
@@ -113,7 +122,7 @@ export default class DvcTourAvailabilityGenerator extends LightningElement {
         return !this.hasGeneratedPreview || this.isPublishing;
     }
 
-    get onlineEnabled() {
+    get isOnlineEnabled() {
         return Boolean(this.currentConfig.onlineTourBookingEnabled);
     }
 }

@@ -3,6 +3,7 @@
     <fullName>DVC_Online_Tour_Booking_Enabled__c</fullName>
     <label>Online Tour Booking Enabled</label>
     <type>Checkbox</type>
+    <trackHistory>true</trackHistory>
     <defaultValue>false</defaultValue>
     <description>When false, only a single Onsite capacity is captured/displayed for this schedule (UAC9). When true, each generated slot also captures a separate, editable Online capacity, capped at the Onsite capacity for that slot (UAC8, UAC10).</description>
 </CustomField>

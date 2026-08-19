@@ -37,18 +37,23 @@ public with sharing class DVC_TourAvailabilityDailyRolloverJob implements Schedu
         Map<String, Date> dateByKey = new Map<String, Date>();
 
         for (DVC_Tour_Availability__c templateRecord : latestByLocationAndSlotType.values()) {
-            Date newDate = templateRecord.DVC_Availability_Date__c.addDays(1);
-            if (newDate > targetEndDate) {
-                continue; // this location's horizon is already fully covered
-            }
-
             DVC_TourAvailabilityRequest request = toRequest(templateRecord);
-            DVC_Tour_Availability__c newAvailability = DVC_TourSlotGenerationService.buildAvailabilityRecord(
-                templateRecord.DVC_Tour_Location__c, newDate, request);
 
-            newAvailabilities.add(newAvailability);
-            requestByKey.put(newAvailability.DVC_Location_Date_Key__c, request);
-            dateByKey.put(newAvailability.DVC_Location_Date_Key__c, newDate);
+            // Per LLD Section 12 step 4: loop from (latestPublishedDate + 1) through
+            // targetEndDate — not just a single day — so the job self-corrects and catches
+            // this location fully back up to the 90-day horizon even if one or more prior
+            // scheduled runs were missed (org downtime, job deployed after inactivity, etc.).
+            for (Date newDate = templateRecord.DVC_Availability_Date__c.addDays(1);
+                    newDate <= targetEndDate;
+                    newDate = newDate.addDays(1)) {
+
+                DVC_Tour_Availability__c newAvailability = DVC_TourSlotGenerationService.buildAvailabilityRecord(
+                    templateRecord.DVC_Tour_Location__c, newDate, request);
+
+                newAvailabilities.add(newAvailability);
+                requestByKey.put(newAvailability.DVC_Location_Date_Key__c, request);
+                dateByKey.put(newAvailability.DVC_Location_Date_Key__c, newDate);
+            }
         }
 
         if (newAvailabilities.isEmpty()) {
@@ -62,11 +67,25 @@ public with sharing class DVC_TourAvailabilityDailyRolloverJob implements Schedu
             return;
         }
 
-        insert toInsert;
-        insertChildren(toInsert, requestByKey, dateByKey);
+        // Savepoint so a failure inserting children never leaves an orphaned parent record
+        // with zero slots, permanently blocked from retry by the uniqueness constraint.
+        Savepoint sp = Database.setSavepoint();
+        try {
+            // IMPORTANT: Security.stripInaccessible() returns CLONED records, not the same
+            // instances passed in - reassign toInsert to that returned list before inserting,
+            // otherwise insertChildren() below would read .Id from objects that were never
+            // actually inserted (and so would never have their Ids populated).
+            SObjectAccessDecision decision = Security.stripInaccessible(AccessType.CREATABLE, toInsert);
+            toInsert = (List<DVC_Tour_Availability__c>) decision.getRecords();
+            insert toInsert;
+            insertChildren(toInsert, requestByKey, dateByKey);
 
-        DVC_LoggerService.logSummary(DVC_TourAvailabilityDailyRolloverJob.class.getName(), 'rollForward',
-            'Rolled forward ' + toInsert.size() + ' Tour Availability day(s) to maintain the 90-day horizon.');
+            DVC_LoggerService.logSummary(DVC_TourAvailabilityDailyRolloverJob.class.getName(), 'rollForward',
+                'Rolled forward ' + toInsert.size() + ' Tour Availability day(s) to maintain the 90-day horizon.');
+        } catch (Exception ex) {
+            Database.rollback(sp);
+            DVC_LoggerService.logException(DVC_TourAvailabilityDailyRolloverJob.class.getName(), 'rollForward', ex);
+        }
     }
 
     /**
@@ -178,10 +197,12 @@ public with sharing class DVC_TourAvailabilityDailyRolloverJob implements Schedu
         }
 
         if (!shiftsToInsert.isEmpty()) {
-            insert shiftsToInsert;
+            SObjectAccessDecision shiftDecision = Security.stripInaccessible(AccessType.CREATABLE, shiftsToInsert);
+            insert shiftDecision.getRecords();
         }
         if (!slotsToInsert.isEmpty()) {
-            insert slotsToInsert;
+            SObjectAccessDecision slotDecision = Security.stripInaccessible(AccessType.CREATABLE, slotsToInsert);
+            insert slotDecision.getRecords();
         }
     }
 }

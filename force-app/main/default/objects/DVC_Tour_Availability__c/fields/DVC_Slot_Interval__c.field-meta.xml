@@ -3,6 +3,7 @@
     <fullName>DVC_Slot_Interval__c</fullName>
     <label>Slot Interval</label>
     <type>Picklist</type>
+    <trackHistory>true</trackHistory>
     <required>true</required>
     <valueSet>
         <restricted>true</restricted>

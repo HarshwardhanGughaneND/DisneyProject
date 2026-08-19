@@ -3,6 +3,7 @@
     <fullName>DVC_Total_Onsite_Capacity__c</fullName>
     <label>Total Onsite Capacity</label>
     <type>Number</type>
+    <trackHistory>true</trackHistory>
     <precision>4</precision>
     <scale>0</scale>
     <required>true</required>

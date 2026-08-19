@@ -3,6 +3,7 @@
     <fullName>DVC_Shift_End_Time__c</fullName>
     <label>Shift End Time</label>
     <type>Time</type>
+    <trackHistory>true</trackHistory>
     <required>true</required>
     <description>End of this guide shift. Must be later than Shift Start Time (VR-05).</description>
 </CustomField>

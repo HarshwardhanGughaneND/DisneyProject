@@ -8,15 +8,20 @@
  *   2. If Nebula Logger's public API changes, or the org standardizes on a different logging
  *      framework, only this one class needs to change.
  *
- * PREREQUISITE: this class assumes the Nebula Logger unmanaged/unlocked package
- * (https://github.com/jongpie/NebulaLogger) is already installed in the target org, exposing
- * the `Logger` class used below. If it is not yet installed, install it before deploying this
- * feature, or temporarily stub out the calls in `logException`/`logSummary`.
+ * PREREQUISITE (hard, compile-time dependency): this class references the Nebula Logger
+ * unmanaged/unlocked package's (https://github.com/jongpie/NebulaLogger) `Logger` class
+ * directly. That reference is resolved at COMPILE TIME, not runtime - if Nebula Logger is not
+ * installed in the target org, this class (and every class in this feature that depends on it)
+ * will FAIL TO COMPILE/DEPLOY. It does NOT "silently degrade" to System.debug in that scenario;
+ * the try/catch blocks below only guard against a *runtime* failure of an already-compiled
+ * Logger call (e.g. a misconfigured logging level or a Nebula Logger internal error), not
+ * against the package being absent. Nebula Logger must be installed before deploying this
+ * feature - see the dependency declared in sfdx-project.json.
  *
  * No PII/PHI/PCI is logged by this feature; only class/method names, record Ids, and
  * schedule-configuration values are captured (see LLD Section 18).
  */
-public without sharing class DVC_LoggerService {
+public with sharing class DVC_LoggerService {
 
     /**
      * Logs an unexpected exception with full context. Never throws - a logging failure must
@@ -28,8 +33,9 @@ public without sharing class DVC_LoggerService {
                 .setExceptionDetails(ex);
             Logger.saveLog();
         } catch (Exception loggerFailure) {
-            // Nebula Logger unavailable/misconfigured - fall back to debug logs rather than
-            // letting a logging problem surface as a user-facing error.
+            // Guards only against a RUNTIME failure of an already-compiled Logger call (see
+            // class-level comment above) - fall back to debug logs rather than letting a
+            // logging problem surface as a user-facing error.
             System.debug(LoggingLevel.ERROR, originClass + '.' + originMethod + ' - exception: ' + ex);
             System.debug(LoggingLevel.ERROR, originClass + '.' + originMethod + ' - logger failure: ' + loggerFailure);
         }

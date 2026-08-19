@@ -3,6 +3,7 @@
     <fullName>DVC_Slot_Start_DateTime__c</fullName>
     <label>Slot Start</label>
     <type>DateTime</type>
+    <trackHistory>true</trackHistory>
     <required>true</required>
     <description>Start of this fixed-width slot row (width = parent DVC_Slot_Interval__c). See LLD Section 10.1.</description>
 </CustomField>

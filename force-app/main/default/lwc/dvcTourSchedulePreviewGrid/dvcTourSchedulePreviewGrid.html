@@ -7,60 +7,62 @@
         </template>
 
         <template if:true={hasSlots}>
-            <div class="slds-grid slds-gutters slds-text-title_caps slds-text-color_weak slds-m-bottom_x-small">
-                <div class="slds-col slds-size_1-of-3">Time</div>
-                <template if:true={onlineEnabled}>
-                    <div class="slds-col slds-size_1-of-3">Onsite</div>
-                    <div class="slds-col slds-size_1-of-3">Online</div>
-                </template>
-                <template if:false={onlineEnabled}>
-                    <div class="slds-col slds-size_2-of-3">Tour Slots</div>
+            <div role="table" aria-label="Schedule Preview">
+                <div class="slds-grid slds-gutters slds-text-title_caps slds-text-color_weak slds-m-bottom_x-small" role="row">
+                    <div class="slds-col slds-size_1-of-3" role="columnheader">Time</div>
+                    <template if:true={isOnlineBookingEnabled}>
+                        <div class="slds-col slds-size_1-of-3" role="columnheader">Onsite</div>
+                        <div class="slds-col slds-size_1-of-3" role="columnheader">Online</div>
+                    </template>
+                    <template if:false={isOnlineBookingEnabled}>
+                        <div class="slds-col slds-size_2-of-3" role="columnheader">Tour Slots</div>
+                    </template>
+                </div>
+
+                <template for:each={rowsForDisplay} for:item="row">
+                    <div key={row.key} class={row.rowClass} role="row">
+                        <div class="slds-grid slds-gutters slds-p-vertical_x-small slds-align-middle">
+                            <div class="slds-col slds-size_1-of-3" role="cell">{row.startLabel}</div>
+
+                            <template if:true={isOnlineBookingEnabled}>
+                                <div class="slds-col slds-size_1-of-3" role="cell">
+                                    <lightning-input
+                                        type="number"
+                                        variant="label-hidden"
+                                        label={row.onsiteAriaLabel}
+                                        value={row.onsiteCapacity}
+                                        disabled
+                                    ></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3" role="cell">
+                                    <lightning-input
+                                        type="number"
+                                        variant="label-hidden"
+                                        label={row.onlineAriaLabel}
+                                        min="0"
+                                        max={row.onsiteCapacity}
+                                        value={row.onlineCapacity}
+                                        data-key={row.key}
+                                        onchange={handleOnlineCapacityChange}
+                                    ></lightning-input>
+                                </div>
+                            </template>
+
+                            <template if:false={isOnlineBookingEnabled}>
+                                <div class="slds-col slds-size_2-of-3" role="cell">
+                                    <lightning-input
+                                        type="number"
+                                        variant="label-hidden"
+                                        label={row.tourSlotsAriaLabel}
+                                        value={row.onsiteCapacity}
+                                        disabled
+                                    ></lightning-input>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </template>
             </div>
-
-            <template for:each={rowsForDisplay} for:item="row">
-                <div key={row.key} class={row.rowClass}>
-                    <div class="slds-grid slds-gutters slds-p-vertical_x-small slds-align-middle">
-                        <div class="slds-col slds-size_1-of-3">{row.startLabel}</div>
-
-                        <template if:true={onlineEnabled}>
-                            <div class="slds-col slds-size_1-of-3">
-                                <lightning-input
-                                    type="number"
-                                    variant="label-hidden"
-                                    label="Onsite"
-                                    value={row.onsiteCapacity}
-                                    disabled
-                                ></lightning-input>
-                            </div>
-                            <div class="slds-col slds-size_1-of-3">
-                                <lightning-input
-                                    type="number"
-                                    variant="label-hidden"
-                                    label="Online"
-                                    min="0"
-                                    max={row.onsiteCapacity}
-                                    value={row.onlineCapacity}
-                                    data-key={row.key}
-                                    onchange={handleOnlineCapacityChange}
-                                ></lightning-input>
-                            </div>
-                        </template>
-
-                        <template if:false={onlineEnabled}>
-                            <div class="slds-col slds-size_2-of-3">
-                                <lightning-input
-                                    type="number"
-                                    variant="label-hidden"
-                                    label="Tour Slots"
-                                    value={row.onsiteCapacity}
-                                    disabled
-                                ></lightning-input>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </template>
         </template>
     </div>
 </template>

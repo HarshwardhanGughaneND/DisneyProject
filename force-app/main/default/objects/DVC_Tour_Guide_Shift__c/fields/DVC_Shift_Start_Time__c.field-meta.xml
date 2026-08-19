@@ -3,6 +3,7 @@
     <fullName>DVC_Shift_Start_Time__c</fullName>
     <label>Shift Start Time</label>
     <type>Time</type>
+    <trackHistory>true</trackHistory>
     <required>true</required>
     <description>Start of this guide shift. Must be earlier than Shift End Time (VR-05).</description>
 </CustomField>

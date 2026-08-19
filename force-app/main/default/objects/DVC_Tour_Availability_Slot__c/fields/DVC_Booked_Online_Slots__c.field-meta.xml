@@ -3,6 +3,7 @@
     <fullName>DVC_Booked_Online_Slots__c</fullName>
     <label>Booked Online Slots</label>
     <type>Number</type>
+    <trackHistory>true</trackHistory>
     <precision>4</precision>
     <scale>0</scale>
     <required>true</required>

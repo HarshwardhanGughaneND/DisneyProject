@@ -3,6 +3,7 @@
     <fullName>DVC_Tour_Duration__c</fullName>
     <label>Tour Duration (Minutes)</label>
     <type>Number</type>
+    <trackHistory>true</trackHistory>
     <precision>4</precision>
     <scale>0</scale>
     <required>true</required>

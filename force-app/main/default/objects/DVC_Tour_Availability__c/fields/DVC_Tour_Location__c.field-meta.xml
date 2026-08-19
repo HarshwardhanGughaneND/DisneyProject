@@ -3,6 +3,7 @@
     <fullName>DVC_Tour_Location__c</fullName>
     <label>Tour Location</label>
     <type>Lookup</type>
+    <trackHistory>true</trackHistory>
     <referenceTo>Location</referenceTo>
     <relationshipName>DVC_Tour_Availabilities</relationshipName>
     <relationshipLabel>Tour Availabilities</relationshipLabel>

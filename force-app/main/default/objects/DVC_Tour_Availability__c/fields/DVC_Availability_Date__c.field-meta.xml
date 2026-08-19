@@ -3,6 +3,7 @@
     <fullName>DVC_Availability_Date__c</fullName>
     <label>Availability Date</label>
     <type>Date</type>
+    <trackHistory>true</trackHistory>
     <required>true</required>
     <description>The single calendar day this schedule/slot set applies to. One record exists per Location + Date + Slot Type.</description>
 </CustomField>

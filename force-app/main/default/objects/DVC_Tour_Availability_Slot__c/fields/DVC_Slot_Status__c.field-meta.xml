@@ -3,6 +3,7 @@
     <fullName>DVC_Slot_Status__c</fullName>
     <label>Slot Status</label>
     <type>Picklist</type>
+    <trackHistory>true</trackHistory>
     <required>true</required>
     <valueSet>
         <restricted>true</restricted>

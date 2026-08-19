@@ -3,6 +3,7 @@
     <fullName>DVC_Lunch_End_Time__c</fullName>
     <label>Lunch End Time</label>
     <type>Time</type>
+    <trackHistory>true</trackHistory>
     <required>false</required>
     <description>Conditionally required when DVC_Lunch_Block_Needed__c is true. Must be later than Lunch Start Time and within the Operating Start/End window (VR-06).</description>
 </CustomField>

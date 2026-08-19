@@ -172,4 +172,14 @@
         <readable>true</readable>
         <editable>false</editable>
     </fieldPermissions>
+    <fieldPermissions>
+        <field>DVC_Tour_Availability_Slot__c.DVC_Remaining_Online_Slots__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <field>DVC_Tour_Availability_Slot__c.DVC_Remaining_Onsite_Slots__c</field>
+        <readable>true</readable>
+        <editable>false</editable>
+    </fieldPermissions>
 </PermissionSet>

@@ -3,6 +3,7 @@
     <fullName>DVC_Lunch_Block_Needed__c</fullName>
     <label>Lunch Block Needed?</label>
     <type>Checkbox</type>
+    <trackHistory>true</trackHistory>
     <defaultValue>false</defaultValue>
     <description>When true, Lunch Start/End Time become required and any generated slot row overlapping the lunch window is forced to zero capacity (UAC5-7).</description>
 </CustomField>

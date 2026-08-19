@@ -84,7 +84,19 @@ public with sharing class DVC_TourSlotGenerationBatch implements Database.Batcha
             return;
         }
 
+        // Savepoint so a failure inserting children (shifts/slots) never leaves an orphaned
+        // parent DVC_Tour_Availability__c with zero children — without this, the parent would
+        // remain committed (Apex does not auto-rollback earlier successful DML in the same
+        // try/catch) and the Location+Date+Slot Type would be permanently blocked from retry
+        // by the DVC_Location_Date_Key__c uniqueness constraint (VR-10 / Section 11.2).
+        Savepoint sp = Database.setSavepoint();
         try {
+            // IMPORTANT: Security.stripInaccessible() returns CLONED records, not the same
+            // instances passed in. We must reassign availabilitiesToInsert to that returned
+            // list before inserting, otherwise the objects we go on to read .Id from below
+            // (to populate child lookups) would never have their Ids populated by the insert.
+            SObjectAccessDecision availabilityDecision = Security.stripInaccessible(AccessType.CREATABLE, availabilitiesToInsert);
+            availabilitiesToInsert = (List<DVC_Tour_Availability__c>) availabilityDecision.getRecords();
             insert availabilitiesToInsert;
 
             List<DVC_Tour_Guide_Shift__c> shiftsToInsert = new List<DVC_Tour_Guide_Shift__c>();
@@ -108,17 +120,20 @@ public with sharing class DVC_TourSlotGenerationBatch implements Database.Batcha
             }
 
             if (!shiftsToInsert.isEmpty()) {
-                insert shiftsToInsert;
+                SObjectAccessDecision shiftDecision = Security.stripInaccessible(AccessType.CREATABLE, shiftsToInsert);
+                insert shiftDecision.getRecords();
             }
             if (!slotsToInsert.isEmpty()) {
-                insert slotsToInsert;
+                SObjectAccessDecision slotDecision = Security.stripInaccessible(AccessType.CREATABLE, slotsToInsert);
+                insert slotDecision.getRecords();
             }
 
             publishedCount += availabilitiesToInsert.size();
         } catch (Exception ex) {
+            Database.rollback(sp);
             DVC_LoggerService.logException(DVC_TourSlotGenerationBatch.class.getName(), 'execute', ex);
             skippedOrFailedCount += availabilitiesToInsert.size();
-            notes.add('Chunk failed: ' + ex.getMessage());
+            notes.add('Chunk failed and rolled back: ' + ex.getMessage());
         }
     }
 
