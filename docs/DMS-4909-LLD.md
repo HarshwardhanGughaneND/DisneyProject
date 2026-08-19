@@ -17,7 +17,6 @@
 1. Table of Contents
 2. Overview
    - 2.1 Purpose
-   - 2.2 Background
 3. Scope
    - 3.1 In Scope
    - 3.2 Out of Scope
@@ -64,12 +63,6 @@
 
 Enable Business Admins and Operations users to configure and generate a **projected tour availability schedule** for one or more pre-configured tour locations, across a date range, driven by Guide Shift staffing, so that guide/tour capacity can be previewed before being published for booking. The screen is a single-pane LWC: on-screen preview computation happens entirely client-side (no records created), and a distinct **Publish** action persists the schedule to Salesforce.
 
-### 2.2 Background
-
-As Business Admin, I want to configure and generate a projected tour availability schedule for one or more pre-configured tour locations, so that I can preview guide capacity and slot availability across a date range before publishing it for booking. As Operations, I need to manage availability.
-
-Tour Locations are selected (not created) from a location tree already configured on location object. The user provides Availability Date Range, Opening/Closing Time, Guide Shifts, Lunch Block, Tour Duration, and Tour Slot Increment, then clicks **Generate & Preview Schedule**; the preview renders in the same screen (no navigation).
-
 ---
 
 ## 3. Scope
@@ -84,7 +77,7 @@ Tour Locations are selected (not created) from a location tree already configure
 - A **Publish** action that persists the generated schedule (`DVC_Tour_Availability__c`, `DVC_Tour_Guide_Shift__c`, `DVC_Tour_Availability_Slot__c`) to Salesforce via Apex.
 - A backend, schedule-independent **daily rolling-window auto-extension job** that keeps published availability continuously covering a 90-day horizon per location.
 - Validation rules per UAC1–UAC10 and the two story business rules.
-- Duplicate-publish protection at Location + Availability Date grain.
+- Duplicate-publish protection at Location + Availability Date + Slot Type grain.
 - The Preview screen will display a preview for a single day. It will remain consistent across all locations and dates based on the configured settings.
 
 ### 3.2 Out of Scope
@@ -97,7 +90,7 @@ Tour Locations are selected (not created) from a location tree already configure
 
 ### 4.1 Component Overview
 
-This screen is built as a **main container LWC** that composes **three child LWCs**, one per functional section of the screen, rather than a single monolithic component:
+Generator screen is built as a **main container LWC** that composes **three child LWCs**, one per functional section of the screen, rather than a single monolithic component:
 
 | # | LWC Name (bundle) | Role |
 |---|---|---|
