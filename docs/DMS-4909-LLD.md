@@ -178,8 +178,6 @@ Generator screen is built as a **main container LWC** that composes **three chil
 | DVC_Lunch_Start_Time__c                 |
 | DVC_Lunch_End_Time__c                   |
 | DVC_Online_Tour_Booking_Enabled__c      |
-| DVC_Online_Capacity_Input__c            |  
-| DVC_Total_Slots__c                      |
 | DVC_Slot_Type__c (Onsite / Event)       |
 | DVC_Location_Date_Key__c (unique)       |
 +-----------------------------------------+
@@ -246,8 +244,6 @@ No schema changes required beyond what already exists. Referenced read-only by t
 | Lunch Start Time | `DVC_Lunch_Start_Time__c` | Time | Custom | Conditional | Edit | Yes | Must be within Operating window (UAC6) |
 | Lunch End Time | `DVC_Lunch_End_Time__c` | Time | Custom | Conditional | Edit | Yes | Must be > Lunch Start, within Operating window (UAC6) |
 | Online Tour Booking Enabled | `DVC_Online_Tour_Booking_Enabled__c` | Checkbox | Custom | No (default unchecked) | Edit | Yes | Unchecked → single Tour Slots view; checked → Onsite + Online (UAC8/UAC9) |
-| Online Capacity Input | `DVC_Online_Capacity_Input__c` | Number(4,0) | Custom | Conditional (if Online enabled) | Edit | Yes | Admin-entered starting value seeded onto every non-zero slot's `DVC_Total_Online_Capacity__c`; must be ≤ the guide-derived Onsite capacity (UAC10) |
-| Total Slots | `DVC_Total_Slots__c` | Number(4,0) | Custom | System-calculated | Read | Yes | Count of generated child slots |
 | Slot Type | `DVC_Slot_Type__c` | Picklist | Custom | Yes | Edit | Yes | This story only creates `Onsite` records; `Event` is populated by the separate Event/Group story reusing this object |
 | Location + Date + Slot Type Key | `DVC_Location_Date_Key__c` | Text(255), External ID, Unique | Custom | System-managed | Read | No | Composite key = `DVC_Tour_Location__c` + `DVC_Availability_Date__c` + `DVC_Slot_Type__c`, enforcing uniqueness (Section 15) |
 
@@ -276,7 +272,7 @@ No schema changes required beyond what already exists. Referenced read-only by t
 | Slot Start DateTime | `DVC_Slot_Start_DateTime__c` | DateTime | Custom | Yes | Edit | Yes | Slot start |
 | Slot End DateTime | `DVC_Slot_End_DateTime__c` | DateTime | Custom | Yes | Edit | Yes | Slot start + Tour Duration |
 | Total Onsite Capacity | `DVC_Total_Onsite_Capacity__c` | Number(4,0) | Custom | System-computed | **Read-only** in the Generator UI (Q6) | Yes | Guide-derived; this **is** the "Total Onsite Slots" referenced in UAC9 — not a separate input (Q3) |
-| Total Online Capacity | `DVC_Total_Online_Capacity__c` | Number(4,0) | Custom | Conditional | **Editable** per row in the preview grid (Q6) | Yes | Seeded from `DVC_Online_Capacity_Input__c`, capped ≤ `DVC_Total_Onsite_Capacity__c` for that row; admin can adjust per slot before Publish (UAC10) |
+| Total Online Capacity | `DVC_Total_Online_Capacity__c` | Number(4,0) | Custom | Conditional | **Editable** per row in the preview grid (Q6) | Yes | Seeded from the admin's Online Capacity input on the config form (transient UI value, not persisted on the parent `DVC_Tour_Availability__c`), capped ≤ `DVC_Total_Onsite_Capacity__c` for that row; admin can adjust per slot before Publish (UAC10) |
 | Booked Online Slots | `DVC_Booked_Online_Slots__c` | Number(4,0), default 0 | Custom | System-managed | Read (booking engine writes) | Yes | Owned by the booking engine, not this generator |
 | Booked Onsite Slots | `DVC_Booked_Onsite_Slots__c` | Number(4,0), default 0 | Custom | System-managed | Read | Yes | Owned by the booking engine |
 | Remaining Online Slots | `DVC_Remaining_Online_Slots__c` | Formula (Number) | Custom | N/A | Read | No | `DVC_Total_Online_Capacity__c - DVC_Booked_Online_Slots__c` |
@@ -413,7 +409,7 @@ A slot is a lunch-block slot whenever its `[Slot_Start, Slot_End)` interval over
 
 ### 10.4 Online Capacity Handling
 
-- `DVC_Online_Capacity_Input__c` is a single value entered once per generation run (Q4), seeded onto every slot's `DVC_Total_Online_Capacity__c` where `DVC_Total_Onsite_Capacity__c > 0`, capped at that slot's Onsite value (VR-07).
+- The admin's **Online Capacity** input on the config form is a single value entered once per generation run (Q4); it is **not persisted anywhere on `DVC_Tour_Availability__c`** — it is only used at generation time to seed every slot's `DVC_Total_Online_Capacity__c` where `DVC_Total_Onsite_Capacity__c > 0`, capped at that slot's Onsite value (VR-07). Once Published, the value effectively lives only on the child `DVC_Tour_Availability_Slot__c` records.
 - The admin can further edit the Online value **per row** directly in the preview grid (Q6); the Onsite column stays read-only/guide-derived.
 - Zero-capacity (guide-occupied or lunch-blocked) slots always show Online = 0 regardless of the input value.
 
@@ -443,8 +439,6 @@ Configuration: Location = *Beach Club* (Resort), Date = 2026-09-01, Opening 08:3
 | `DVC_Lunch_Start_Time__c` | 12:30 PM |
 | `DVC_Lunch_End_Time__c` | 01:30 PM |
 | `DVC_Online_Tour_Booking_Enabled__c` | false |
-| `DVC_Online_Capacity_Input__c` | *(blank)* |
-| `DVC_Total_Slots__c` | 14 |
 | `DVC_Slot_Type__c` | Onsite |
 | `DVC_Location_Date_Key__c` | `BeachClub_2026-09-01_Onsite` |
 
@@ -486,8 +480,6 @@ Configuration: Location = *Boardwalk Villas* (Resort), Date = 2026-09-02, Openin
 | `DVC_Slot_Interval__c` | 60 Minutes |
 | `DVC_Lunch_Block_Needed__c` | false |
 | `DVC_Online_Tour_Booking_Enabled__c` | true |
-| `DVC_Online_Capacity_Input__c` | 1 |
-| `DVC_Total_Slots__c` | 8 |
 | `DVC_Slot_Type__c` | Onsite |
 | `DVC_Location_Date_Key__c` | `BoardwalkVillas_2026-09-02_Onsite` |
 
@@ -555,7 +547,7 @@ Per business clarification (Q9), the story's "Clone the Schedule every 24 hours"
   2. Find the latest `DVC_Availability_Date__c` currently published for that Location.
   3. Compute `targetEndDate = TODAY + 90`.
   4. For each date from `(latestPublishedDate + 1)` through `targetEndDate` that doesn't already exist (normally just one day, but the loop tolerates a missed run):
-     - Clone the configuration (Operating Hours, Tour Duration, Slot Interval, Lunch Block settings, Online Tour Booking Enabled + `DVC_Online_Capacity_Input__c`, and all `DVC_Tour_Guide_Shift__c` child rows) from the most recent `DVC_Tour_Availability__c` for that Location.
+     - Clone the configuration (Operating Hours, Tour Duration, Slot Interval, Lunch Block settings, Online Tour Booking Enabled flag, and all `DVC_Tour_Guide_Shift__c` child rows) from the most recent `DVC_Tour_Availability__c` for that Location. Since the Online Capacity input itself isn't persisted on the parent, the online capacity value to replicate is read from that most recent day's existing `DVC_Tour_Availability_Slot__c` children (e.g., the `DVC_Total_Online_Capacity__c` value already present on an open slot).
      - Create a new `DVC_Tour_Availability__c` for the new date and run the Section 10.1 algorithm (via `DVC_TourSlotGenerationService`) to generate its `DVC_Tour_Availability_Slot__c` children.
   5. `DVC_Location_Date_Key__c` uniqueness (Section 15) prevents duplicate creation if the job is ever re-run for a date already covered.
 - **Effect:** every published location's availability horizon rolls forward automatically by one day, every day, with no manual admin action required, satisfying the business rule's intent as clarified.
