@@ -76,7 +76,7 @@ Tour Locations are selected (not created) from a location tree already configure
 
 ### 3.1 In Scope
 
-- Single-screen LWC: Tour Location tree, "Onsite" configuration form, and in-place Schedule Preview grid.
+- Single screen built as a main container LWC (`dvcTourAvailabilityGenerator`) composing three child LWCs — Tour Location tree (`dvcTourLocationTree`), "Onsite" configuration form (`dvcTourAvailabilityConfigForm`), and in-place Schedule Preview grid (`dvcTourSchedulePreviewGrid`) — per the component structure defined in Section 4.1.
 - Guide Shifts as a **repeatable list** (add/remove shift rows, each with a time range and a guide-count stepper), driving slot capacity via guide-occupancy logic.
 - Lunch Block configuration and its effect on generated slots (0 capacity).
 - Online Tour Booking toggle, with a separate, admin-entered, editable **Online Capacity** input, capped ≤ the guide-derived **Onsite Capacity** for each slot (read-only).
