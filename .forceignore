@@ -1,0 +1,9 @@
+\# LWC configuration files
+**/jsconfig.json
+**/.eslintrc.json
+
+\# LWC Jest tests
+**/__tests__/**
+
+\# ignore vscode metadata
+**/.vscode/**

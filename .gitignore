@@ -1,0 +1,13 @@
+# Node / Jest
+node_modules/
+coverage/
+npm-debug.log*
+
+# SFDX local dev
+.sfdx/
+.localdevserver/
+.sf/
+
+# OS / editor
+.DS_Store
+.vscode/

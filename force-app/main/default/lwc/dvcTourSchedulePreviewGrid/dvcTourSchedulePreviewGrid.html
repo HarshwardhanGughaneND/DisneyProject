@@ -1,0 +1,68 @@
+<template>
+    <div class="slds-p-around_small">
+        <h2 class="slds-text-heading_small slds-m-bottom_small">Schedule Preview</h2>
+
+        <template if:false={hasSlots}>
+            <p class="slds-text-color_weak">Click "Generate &amp; Preview Schedule" to see the projected slots.</p>
+        </template>
+
+        <template if:true={hasSlots}>
+            <div role="table" aria-label="Schedule Preview">
+                <div class="slds-grid slds-gutters slds-text-title_caps slds-text-color_weak slds-m-bottom_x-small" role="row">
+                    <div class="slds-col slds-size_1-of-3" role="columnheader">Time</div>
+                    <template if:true={isOnlineBookingEnabled}>
+                        <div class="slds-col slds-size_1-of-3" role="columnheader">Onsite</div>
+                        <div class="slds-col slds-size_1-of-3" role="columnheader">Online</div>
+                    </template>
+                    <template if:false={isOnlineBookingEnabled}>
+                        <div class="slds-col slds-size_2-of-3" role="columnheader">Tour Slots</div>
+                    </template>
+                </div>
+
+                <template for:each={rowsForDisplay} for:item="row">
+                    <div key={row.key} class={row.rowClass} role="row">
+                        <div class="slds-grid slds-gutters slds-p-vertical_x-small slds-align-middle">
+                            <div class="slds-col slds-size_1-of-3" role="cell">{row.startLabel}</div>
+
+                            <template if:true={isOnlineBookingEnabled}>
+                                <div class="slds-col slds-size_1-of-3" role="cell">
+                                    <lightning-input
+                                        type="number"
+                                        variant="label-hidden"
+                                        label={row.onsiteAriaLabel}
+                                        value={row.onsiteCapacity}
+                                        disabled
+                                    ></lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-3" role="cell">
+                                    <lightning-input
+                                        type="number"
+                                        variant="label-hidden"
+                                        label={row.onlineAriaLabel}
+                                        min="0"
+                                        max={row.onsiteCapacity}
+                                        value={row.onlineCapacity}
+                                        data-key={row.key}
+                                        onchange={handleOnlineCapacityChange}
+                                    ></lightning-input>
+                                </div>
+                            </template>
+
+                            <template if:false={isOnlineBookingEnabled}>
+                                <div class="slds-col slds-size_2-of-3" role="cell">
+                                    <lightning-input
+                                        type="number"
+                                        variant="label-hidden"
+                                        label={row.tourSlotsAriaLabel}
+                                        value={row.onsiteCapacity}
+                                        disabled
+                                    ></lightning-input>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

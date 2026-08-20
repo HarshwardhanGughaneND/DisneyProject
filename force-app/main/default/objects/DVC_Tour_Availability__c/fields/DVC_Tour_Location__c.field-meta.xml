@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DVC_Tour_Location__c</fullName>
+    <label>Tour Location</label>
+    <type>Lookup</type>
+    <trackHistory>true</trackHistory>
+    <referenceTo>Location</referenceTo>
+    <relationshipName>DVC_Tour_Availabilities</relationshipName>
+    <relationshipLabel>Tour Availabilities</relationshipLabel>
+    <required>true</required>
+    <deleteConstraint>Restrict</deleteConstraint>
+    <lookupFilter>
+        <active>true</active>
+        <filterItems>
+            <field>Location.LocationType</field>
+            <operation>equals</operation>
+            <value>Resort</value>
+        </filterItems>
+        <isOptional>false</isOptional>
+        <errorMessage>Only Resort-type Tour Locations may be selected. Channel-type parent records (e.g., Walt Disney World, Disneyland, Aulani) are not directly selectable here.</errorMessage>
+    </lookupFilter>
+    <description>Parent Tour Location (standard Location object). Restricted via lookup filter to LocationType = &apos;Resort&apos; per LLD Section 7.2.</description>
+</CustomField>

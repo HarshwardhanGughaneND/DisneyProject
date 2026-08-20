@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSetGroup xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>DVC Tour Availability Management PSG</label>
+    <description>DMS-4909: Bundles DVC_Tour_Availability_Management for assignment to Business Admin and Operations users (LLD Section 13).</description>
+    <permissionSetGroupComponents>
+        <permissionSet>DVC_Tour_Availability_Management</permissionSet>
+    </permissionSetGroupComponents>
+    <status>Updated</status>
+</PermissionSetGroup>

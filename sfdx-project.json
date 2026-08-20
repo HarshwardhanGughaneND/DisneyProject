@@ -1,0 +1,13 @@
+{
+  "packageDirectories": [
+    {
+      "path": "force-app",
+      "default": true
+    }
+  ],
+  "name": "DisneyProject",
+  "namespace": "",
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "61.0",
+  "$comment_dependencies": "This project has a HARD, compile-time dependency on the Nebula Logger unmanaged/unlocked package (https://github.com/jongpie/NebulaLogger) - see DVC_LoggerService.cls. It is intentionally NOT declared under packageDirectories[].dependencies here, since we don't yet have the real installed package version Id (04t...) for this org, and a placeholder/invalid Id would break `sf org create scratch` for every developer. Once the real Nebula Logger package version Id is known, add: packageDirectories[0].dependencies = [{ \"package\": \"Nebula Logger\", \"versionNumber\": \"<version>\" }] and packageAliases = { \"Nebula Logger\": \"<real 04t... Id>\" }. See docs/DMS-4909-DEVELOPMENT.md for manual installation instructions in the meantime."
+}

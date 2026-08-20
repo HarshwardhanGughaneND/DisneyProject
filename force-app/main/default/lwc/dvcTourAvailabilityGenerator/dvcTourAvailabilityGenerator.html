@@ -1,0 +1,44 @@
+<template>
+    <lightning-card>
+        <div class="slds-grid slds-gutters slds-wrap">
+            <div class="slds-col slds-size_1-of-4 slds-medium-size_3-of-12">
+                <c-dvc-tour-location-tree onlocationselectionchange={handleLocationSelectionChange}></c-dvc-tour-location-tree>
+            </div>
+
+            <div class="slds-col slds-size_1-of-4 slds-medium-size_4-of-12">
+                <c-dvc-tour-availability-config-form onconfigchange={handleConfigChange}></c-dvc-tour-availability-config-form>
+
+                <div class="slds-p-around_small slds-grid slds-gutters">
+                    <div class="slds-col">
+                        <lightning-button
+                            data-id="generate-button"
+                            label="Generate & Preview Schedule"
+                            variant="brand"
+                            icon-name="utility:date_time"
+                            disabled={isGenerateDisabled}
+                            onclick={handleGenerateClick}
+                        ></lightning-button>
+                    </div>
+                    <div class="slds-col">
+                        <lightning-button
+                            data-id="publish-button"
+                            label="Publish"
+                            variant="brand"
+                            icon-name="utility:upload"
+                            disabled={isPublishDisabled}
+                            onclick={handlePublishClick}
+                        ></lightning-button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slds-col slds-size_1-of-2 slds-medium-size_5-of-12">
+                <c-dvc-tour-schedule-preview-grid
+                    slots={previewSlots}
+                    is-online-booking-enabled={isOnlineEnabled}
+                    onlinecapacitychange={handleOnlineCapacityChange}
+                ></c-dvc-tour-schedule-preview-grid>
+            </div>
+        </div>
+    </lightning-card>
+</template>

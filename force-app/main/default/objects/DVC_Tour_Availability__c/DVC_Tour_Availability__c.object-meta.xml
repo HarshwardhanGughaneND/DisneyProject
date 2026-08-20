@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Tour Availability</label>
+    <pluralLabel>Tour Availabilities</pluralLabel>
+    <nameField>
+        <type>AutoNumber</type>
+        <label>Tour Availability Name</label>
+        <displayFormat>TA-{0000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <description>DMS-4909: Represents one day&apos;s operating schedule for a single Tour Location (one record per Location + Availability Date + Slot Type). Created only when a schedule is Published; the interactive preview does not persist this object. See LLD docs/DMS-4909-LLD.md.</description>
+</CustomObject>

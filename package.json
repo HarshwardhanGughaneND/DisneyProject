@@ -1,0 +1,14 @@
+{
+  "name": "disneyproject",
+  "private": true,
+  "version": "1.0.0",
+  "description": "DMS-4909 Tour Availability Generator - Salesforce DX project",
+  "scripts": {
+    "test:unit": "sfdx-lwc-jest",
+    "test:unit:watch": "sfdx-lwc-jest --watch",
+    "test:unit:coverage": "sfdx-lwc-jest --coverage"
+  },
+  "devDependencies": {
+    "@salesforce/sfdx-lwc-jest": "^7.0.0"
+  }
+}

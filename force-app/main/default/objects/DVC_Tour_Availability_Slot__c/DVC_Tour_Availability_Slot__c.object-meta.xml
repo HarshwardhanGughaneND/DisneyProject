@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Tour Availability Slot</label>
+    <pluralLabel>Tour Availability Slots</pluralLabel>
+    <nameField>
+        <type>AutoNumber</type>
+        <label>Tour Availability Slot Name</label>
+        <displayFormat>TAS-{00000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ControlledByParent</sharingModel>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <description>DMS-4909: Represents an individual generated, fixed-Slot-Interval-width time block under a DVC_Tour_Availability__c record. Booked/Remaining fields are owned and maintained by the guest-facing booking engine, not this generator. See LLD docs/DMS-4909-LLD.md Section 7.4.</description>
+</CustomObject>

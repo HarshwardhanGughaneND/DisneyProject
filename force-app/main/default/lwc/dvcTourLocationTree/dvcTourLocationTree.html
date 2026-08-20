@@ -1,0 +1,32 @@
+<template>
+    <div class="slds-p-around_small dvc-location-tree">
+        <h2 class="slds-text-heading_small slds-m-bottom_small">Tour Locations</h2>
+
+        <template if:true={hasLoadError}>
+            <p class="slds-text-color_error">Unable to load Tour Locations. Please refresh the page.</p>
+        </template>
+
+        <template if:true={showEmptyState}>
+            <p class="slds-text-color_weak">No Resort-type Tour Locations were found.</p>
+        </template>
+
+        <template if:true={hasGroups}>
+            <template for:each={groups} for:item="group">
+                <div key={group.channelId} class="slds-m-bottom_medium">
+                    <p class="slds-text-title_caps slds-text-color_weak slds-m-bottom_x-small">{group.channelName}</p>
+                    <template for:each={group.resorts} for:item="resort">
+                        <div key={resort.locationId} class="slds-p-vertical_xx-small slds-p-left_small">
+                            <lightning-input
+                                type="checkbox"
+                                label={resort.label}
+                                data-id={resort.locationId}
+                                checked={resort.selected}
+                                onchange={handleCheckboxChange}
+                            ></lightning-input>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </template>
+    </div>
+</template>
