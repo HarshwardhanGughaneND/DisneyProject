@@ -1,8 +1,11 @@
 import { LightningElement } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import publishSchedule from '@salesforce/apex/DVC_TourAvailabilityPublishController.publishSchedule';
 import validatePublishRequest from '@salesforce/apex/DVC_TourAvailabilityPublishController.validatePublishRequest';
 import { generatePreviewSlots } from 'c/dvcTourAvailabilityUtils';
+
+const TOUR_AVAILABILITY_OBJECT_API_NAME = 'DVC_Tour_Availability__c';
 
 /**
  * dvcTourAvailabilityGenerator
@@ -11,9 +14,10 @@ import { generatePreviewSlots } from 'c/dvcTourAvailabilityUtils';
  * child components (Location Tree, Config Form, Schedule Preview Grid) and the two top-level
  * actions:
  *   - Generate & Preview Schedule: 100% client-side, no Apex call, no records created (Q0).
- *   - Publish: calls Apex to persist the schedule via DVC_TourSlotGenerationBatch.
+ *   - Publish: calls Apex to persist the schedule via DVC_TourSlotGenerationBatch. On success,
+ *     the user is navigated to the DVC_Tour_Availability__c List View (Decision Log Q13).
  */
-export default class DvcTourAvailabilityGenerator extends LightningElement {
+export default class DvcTourAvailabilityGenerator extends NavigationMixin(LightningElement) {
     selectedLocationIds = [];
     currentConfig = {};
     previewSlots = [];
@@ -83,12 +87,28 @@ export default class DvcTourAvailabilityGenerator extends LightningElement {
                 'Your schedule has been submitted for publishing. This runs asynchronously and may take a few minutes for large date ranges.',
                 'success'
             );
+            this.navigateToTourAvailabilityListView();
         } catch (error) {
             const message = (error && error.body && error.body.message) || 'Something went wrong while publishing the schedule.';
             this.showToast('Error', message, 'error');
         } finally {
             this.isPublishing = false;
         }
+    }
+
+    /**
+     * Per Decision Log Q13: after a successful Publish, the user lands on the standard List
+     * View for DVC_Tour_Availability__c (not a blank Generator form, not the individual
+     * published record).
+     */
+    navigateToTourAvailabilityListView() {
+        this[NavigationMixin.Navigate]({
+            type: 'standard__objectPage',
+            attributes: {
+                objectApiName: TOUR_AVAILABILITY_OBJECT_API_NAME,
+                actionName: 'list'
+            }
+        });
     }
 
     buildPublishRequest() {

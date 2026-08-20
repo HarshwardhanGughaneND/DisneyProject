@@ -68,7 +68,10 @@ missed (org downtime, job deployed after a period of inactivity, etc.).
 | `dvcTourAvailabilityUtils` | JS-only module: client-side mirror of the Apex slot-generation algorithm |
 
 "Generate & Preview Schedule" never calls Apex (per Decision Log Q0) — it runs
-`dvcTourAvailabilityUtils.generatePreviewSlots()` entirely in the browser. **Any change to the
+`dvcTourAvailabilityUtils.generatePreviewSlots()` entirely in the browser. **Publish**, once
+successful, navigates the user to the standard List View for `DVC_Tour_Availability__c` via
+`NavigationMixin` (Decision Log Q13) — it does not return to a blank form or the individual
+published record. **Any change to the
 algorithm must be made in both `DVC_TourSlotGenerationService.cls` and
 `dvcTourAvailabilityUtils.js` together**, or the preview will stop matching what gets Published.
 This is now enforced by a shared, hand-verified set of test fixtures (LLD Section 10.6 Combos 1,
@@ -139,30 +142,55 @@ installed package version Id (`04t...`) for this org and a placeholder/invalid I
 SOQL query). Verify this against the actual org schema before first deploy; update the query if
 the org uses a different relationship name.
 
+## Business confirmations received 2026-08-20
+
+Several previously-open questions were resolved by business on 2026-08-20 (see LLD Decision Log
+Q2, Q13–Q16). Summary of what changed vs. what stayed the same:
+
+- **Guide Shifts can overlap** (guide counts sum), with **no maximum** shift count. This already
+  matches the existing default algorithm in `DVC_TourSlotGenerationService`/
+  `dvcTourAvailabilityUtils.js` — **no code change was needed**, only the LLD's Decision
+  Log/Open Items were updated to mark this confirmed rather than assumed.
+- **Publish now navigates to the `DVC_Tour_Availability__c` List View** on success (not a blank
+  form, not the individual record) — **implemented** via `NavigationMixin` in
+  `dvcTourAvailabilityGenerator.js` (`navigateToTourAvailabilityListView()`), triggered after the
+  success toast.
+- **Timezone stays a single, fixed US Eastern/org-default timezone** — reconfirms the original
+  design (Q11); an earlier idea about per-Location timezones plus a cross-Channel validation
+  error was floated by business, then explicitly **not adopted** for this iteration. No code
+  change needed.
+- **Total Onsite Slots stays system-generated/read-only**; Online Tour Booking Slots remains the
+  only user-editable capacity field — reconfirms the original design (Q3/Q6). An earlier answer
+  had suggested making Onsite editable; that was reversed back to the original design in the
+  final confirmation. No code change needed.
+- **The Combo 1–6 slot-generation model (LLD Section 10/10.6) is accepted as final** for now,
+  including the specific edge-case behaviors (trailing partial block when Slot Interval doesn't
+  evenly divide the operating window, non-multiple Duration/Interval pairs, a tour starting into
+  the Lunch Block). No code change needed — these were already implemented exactly as described.
+
 ## Deliberately NOT implemented yet (pending business confirmation)
 
-These map directly to `docs/DMS-4909-LLD.md` Section 20 (Open Items):
+These map directly to `docs/DMS-4909-LLD.md` Section 20 (Open Items, renumbered after the above
+confirmations moved former Items 1 and 2 into the Decision Log):
 
-1. **Guide Shift overlap/max-count/gap rules** — currently shifts are simply summed if they
-   overlap, with no cap on count. (Item 1)
-2. **Publish button UX** — the Publish button exists and calls Apex, but there's no
-   success/failure toast polling for the async batch job yet beyond an immediate "submitted"
-   toast; no Platform Event/notification on batch completion. (Item 2)
-3. **Daily rollover job monitoring/alerting** — runs at a hardcoded 2:00 AM cron, logs a summary
+1. **Daily rollover job monitoring/alerting** — runs at a hardcoded 2:00 AM cron, logs a summary
    via Nebula Logger on completion, but has no dedicated failure alerting (email, Platform
    Event). Also note: it runs synchronously (not itself batched) across all locations in a single
    scheduled-Apex transaction — fine for a small number of published locations, but worth
-   revisiting (e.g. chunking via `Database.Batchable`) if that number grows large. (Item 3)
-4. **Trailing partial block when Slot Interval doesn't evenly divide the operating window**
-   (e.g., 60-minute interval over a 7.5-hour day) — currently silently dropped, no validation
-   blocks the combination. (Item 7)
-5. **`DVC_Slot_Status__c` picklist values** — implemented as `Open`/`Closed` as a working
+   revisiting (e.g. chunking via `Database.Batchable`) if that number grows large. (Item 1)
+2. **Whether Online Capacity input should support different values across the day** rather than
+   one flat value per generation run. (Item 2)
+3. **Will there ever be a Location record of type `Virtual`?** Currently out of scope since none
+   exist in the org. (Item 3)
+4. **`DVC_Slot_Status__c` picklist values** — implemented as `Open`/`Closed` as a working
    assumption; business has floated `Available`/`Booked` as an alternative. If changed, update
    the picklist, `DVC_TourAvailabilityConstants`, `DVC_TourSlotGenerationService`, and
-   `dvcTourAvailabilityUtils.js` together. (Item 6)
-6. **A tour starting before Lunch but running into it** — currently allowed (matches the
-   reference mock-up), pending explicit business sign-off. (Item 9)
-7. **Custom report types** (LLD Section 14) — not yet built.
+   `dvcTourAvailabilityUtils.js` together. (Item 4)
+5. **Custom report types** (LLD Section 14) — not yet built.
+
+Items 5–7 from the prior Open Items list (the Combo 1–6 edge cases) are no longer "open" — they
+were formally accepted as-is on 2026-08-20 (Decision Log Q16) and are now just documented
+characteristics of the design, not pending questions.
 
 None of these block a first deployment/demo — they're flagged here so they're easy to find and
 update once business responds, per the Decision Log/Open Items process already established in
@@ -184,16 +212,31 @@ org access, before assuming any Apex class is deploy-ready.
 
 ### LWC (Jest)
 `npm install && npm run test:unit` runs `sfdx-lwc-jest` against every LWC in
-`force-app/main/default/lwc/`. As of this pass, `dvcTourAvailabilityUtils.test.js` gives the
-client-side slot-generation algorithm the same Combo 1/4/6 coverage as its Apex counterpart, plus
-edge-case coverage (missing config, invalid Opening/Closing order, Online-capacity capping). This
-was run and verified passing in this environment (Node 22, all 7 tests green) — and in the
-process caught the real `LWC1108` compile bug described above, which a code-only review had
-missed. `dvcTourAvailabilityConfigForm`, `dvcTourAvailabilityGenerator`,
-`dvcTourLocationTree`, and `dvcTourSchedulePreviewGrid` do not yet have their own Jest test
-files (only exercised indirectly by successfully compiling) — adding component-level tests for
-these (especially the config form's new `reportValidity()` business-rule checks) is a natural
-next increment.
+`force-app/main/default/lwc/`. Currently covered:
+- `dvcTourAvailabilityUtils.test.js` — gives the client-side slot-generation algorithm the same
+  Combo 1/4/6 coverage as its Apex counterpart, plus edge-case coverage (missing config, invalid
+  Opening/Closing order, Online-capacity capping). Running this suite caught a real `LWC1108`
+  compile bug (`@api onlineEnabled` on `dvcTourSchedulePreviewGrid` — invalid property name)
+  that a code-only review had missed.
+- `dvcTourAvailabilityGenerator.test.js` — covers the Publish flow end-to-end (Generate → enable
+  Publish → Publish → navigate to the `DVC_Tour_Availability__c` List View on success, per
+  Decision Log Q13), including negative paths (server-side validation errors, an Apex exception,
+  and a client-side validation failure at Publish time), all without navigating anywhere.
+
+**Testing `NavigationMixin` note:** the built-in `lightning/navigation` stub shipped with
+`@salesforce/sfdx-lwc-jest` defines `[NavigationMixin.Navigate]()` on a frozen/non-configurable
+class prototype, so `jest.spyOn()`/`Object.defineProperty()` cannot patch it directly from a test
+(LWC's compiler hardens component internals against monkey-patching). We added our own mock at
+`test/jest-mocks/lightning/navigation.js` (wired in via `jest.config.js`'s `moduleNameMapper`,
+overriding the package's built-in stub) that exposes a plain, always-mockable `navigateMock` and
+a `getNavigateCalledWith()` helper — the same pattern Salesforce's own `lwc-recipes` samples use.
+`@salesforce/sfdx-lwc-jest` was also upgraded from `^3.1.0` to `^7.0.0` in this pass (the older
+version additionally threw a `sourceApiVersion` mismatch warning against our `61.0` project).
+
+`dvcTourAvailabilityConfigForm`, `dvcTourLocationTree`, and `dvcTourSchedulePreviewGrid` do not
+yet have their own dedicated Jest test files (only exercised indirectly, via the container's
+tests and by successfully compiling) — adding component-level tests for these (especially the
+config form's `reportValidity()` business-rule checks) is a natural next increment.
 
 ## Post-deploy checklist
 
