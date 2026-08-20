@@ -8,7 +8,7 @@
 
 **Source of Truth for This Revision:** Jira story text (description, Field Inventory, Acceptance Criteria, Business Rules) + the two UI mock-up screenshots
 
-**Status:** Draft — several open items pending business (see Section 20), including the slot-generation model in Section 10, which is our current working understanding and not yet formally confirmed
+**Status:** Draft — the slot-generation model (Section 10), Guide Shift overlap rules, Publish navigation, timezone, and Total Onsite Slots editability are all confirmed (see Decision Log, Section 19); a handful of lower-priority items remain open (see Section 20)
 
 ---
 
@@ -145,7 +145,7 @@ Generator screen is built as a **main container LWC** that composes **three chil
 3. Client-side validation (Section 9) gates the **Generate & Preview Schedule** button.
 4. On click, the LWC runs the guide-driven slot generation algorithm (Section 10) **entirely in-browser** and renders the Schedule Preview grid in place — **no Apex call, no records created** (per business decision, Section 19 Q0).
 5. The admin may adjust the editable **Online Capacity** value per row directly in the preview grid (Onsite remains read-only, guide-derived) and re-generate as needed; other field values persist across re-generation (UAC19).
-6. When satisfied, the admin clicks **Publish** (new action, added per business decision — see Section 20, Item 2 for the still-needed UI/AC detail). This calls `DVC_TourAvailabilityPublishController.publishSchedule()`, which re-validates everything server-side and enqueues `DVC_TourSlotGenerationBatch` to persist `DVC_Tour_Availability__c`, `DVC_Tour_Guide_Shift__c`, and `DVC_Tour_Availability_Slot__c` records for every selected Location × Date in the range.
+6. When satisfied, the admin clicks **Publish**. This calls `DVC_TourAvailabilityPublishController.publishSchedule()`, which re-validates everything server-side and enqueues `DVC_TourSlotGenerationBatch` to persist `DVC_Tour_Availability__c`, `DVC_Tour_Guide_Shift__c`, and `DVC_Tour_Availability_Slot__c` records for every selected Location × Date in the range. On success, the user is navigated to the standard **List View of `DVC_Tour_Availability__c`** (Decision Log Q13).
 7. Independently of the interactive flow, `DVC_TourAvailabilityDailyRolloverJob` runs once every 24 hours and extends each location's published availability forward by one day, maintaining a continuously rolling 90-day horizon (Section 12).
 
 ---
@@ -223,7 +223,7 @@ No schema changes required beyond what already exists. Referenced read-only by t
 | Field Label | API Name | Data Type | Standard/Custom | Remarks |
 |---|---|---|---|---|
 | Location Name | `Name` | Text | Standard | Display name in the tree |
-| Location Type | `LocationType` | Picklist | Standard (custom values) | Channel, Theme Park, Area, Resort, Kiosk, Sales Center, Virtual ⚠ *(as of now, no Location records of type `Virtual` are being created in the org — see Section 20, Item 5)* |
+| Location Type | `LocationType` | Picklist | Standard (custom values) | Channel, Theme Park, Area, Resort, Kiosk, Sales Center, Virtual ⚠ *(as of now, no Location records of type `Virtual` are being created in the org — see Section 20, Item 3)* |
 | Parent Location | `ParentLocationId` | Lookup(Location) | Standard | Links a `Resorts`-type record to its parent `Channel`-type record, driving the tree's grouping |
 
 ### 7.2 DVC_Tour_Availability\_\_c (New/Extended)
@@ -278,7 +278,7 @@ No schema changes required beyond what already exists. Referenced read-only by t
 | Remaining Online Slots | `DVC_Remaining_Online_Slots__c` | Formula (Number) | Custom | N/A | Read | No | `DVC_Total_Online_Capacity__c - DVC_Booked_Online_Slots__c` |
 | Remaining Onsite Slots | `DVC_Remaining_Onsite_Slots__c` | Formula (Number) | Custom | N/A | Read | No | `DVC_Total_Onsite_Capacity__c - DVC_Booked_Onsite_Slots__c` |
 | Is Lunch Block | `DVC_Is_Lunch_Block__c` | Checkbox | Custom | System-managed | Read | Yes | True when this slot overlaps the Lunch window; capacities forced to 0 (UAC7) |
-| Status | `DVC_Slot_Status__c` | Picklist | Custom | System-managed | Read | Yes | ⚠ **NEEDS BUSINESS CLARIFICATION** — exact picklist values are not yet confirmed with business. **Current assumption: `Available`, `Booked`.** Open question: does a zero-capacity slot (guide-occupied or lunch-blocked) need its own distinct value (e.g., `Closed`), or should it simply be represented as `Available` with 0 capacity? See Section 20, Item 6. |
+| Status | `DVC_Slot_Status__c` | Picklist | Custom | System-managed | Read | Yes | ⚠ **NEEDS BUSINESS CLARIFICATION** — exact picklist values are not yet confirmed with business. **Current assumption: `Available`, `Booked`.** Open question: does a zero-capacity slot (guide-occupied or lunch-blocked) need its own distinct value (e.g., `Closed`), or should it simply be represented as `Available` with 0 capacity? See Section 20, Item 4. |
 
 ---
 
@@ -293,7 +293,7 @@ No schema changes required beyond what already exists. Referenced read-only by t
 | End Date | `lightning-input type="date"` | none | ≥ Start Date (UAC2) |
 | Opening Time | `lightning-input type="time"` | none | < Closing Time (UAC3) |
 | Closing Time | `lightning-input type="time"` | none | > Opening Time (UAC3) |
-| Guide Shifts | Repeatable row list: `lightning-input type="time"` (start/end) + stepper (guide count) + delete icon + "+ Add Shift" button | One row, **2 guides** (confirmed default), matching the Shift Time to Opening–Closing | ≥ 1 shift required; ≥ 1 guide per shift; overlap/gap rules pending business (Section 20, Item 1) |
+| Guide Shifts | Repeatable row list: `lightning-input type="time"` (start/end) + stepper (guide count) + delete icon + "+ Add Shift" button | One row, **2 guides** (confirmed default), matching the Shift Time to Opening–Closing | ≥ 1 shift required; ≥ 1 guide per shift; shifts may overlap in time (guide counts sum), no maximum shift count (Decision Log Q2) |
 | Lunch Block Needed? | `lightning-input type="toggle"` | unchecked | Reveals Lunch Start / Lunch End (UAC5) |
 | Lunch Start / Lunch End | `lightning-input type="time"` | none | Conditionally required + validated (UAC6) |
 | Tour Duration | `lightning-combobox` | 60 mins | Drives guide-occupancy window (UAC11) |
@@ -301,7 +301,7 @@ No schema changes required beyond what already exists. Referenced read-only by t
 | Online Tour Booking | `lightning-input type="toggle"` | unchecked | **Unchecked:** single **Tour Slots** column/view, guide-derived only. **Checked:** reveals an **Online Capacity** numeric input; preview splits into **Onsite** (read-only) and **Online** (editable) columns (UAC8/UAC9). |
 | Online Capacity | `lightning-input type="number"` | none | Visible only when Online Tour Booking is enabled; must be ≤ guide-derived Onsite capacity (UAC10) |
 | Generate & Preview Schedule | `lightning-button variant="brand"` | disabled | Enabled only when all required fields above are valid; triggers client-side generation only (no Apex call) |
-| Publish | `lightning-button variant="brand"` *(new — see Section 20, Item 2)* | disabled until a preview has been generated | Invokes Apex to persist the schedule (Section 11) |
+| Publish | `lightning-button variant="brand"` | disabled until a preview has been generated | Invokes Apex to persist the schedule (Section 11); on success, navigates to the `DVC_Tour_Availability__c` List View (Decision Log Q13) |
 
 ### 8.2 Schedule Preview Grid
 
@@ -348,15 +348,16 @@ FOR EACH selected Location L:
   rowStart = Operating_Start_Time
 
   // Rows are fixed-width blocks of Slot_Interval, tiling the operating window.
-  // ASSUMPTION (pending confirmation, Section 20 Item 7): if (Operating_End_Time -
-  // Operating_Start_Time) is not evenly divisible by Slot_Interval, the trailing
-  // partial block is simply dropped (no row generated for it).
+  // ASSUMPTION (accepted as-is per Decision Log Q16, Section 20 Item 5): if
+  // (Operating_End_Time - Operating_Start_Time) is not evenly divisible by
+  // Slot_Interval, the trailing partial block is simply dropped (no row generated for it).
   WHILE (rowStart + Slot_Interval) <= Operating_End_Time:
     rowEnd = rowStart + Slot_Interval
 
     // Determine active shift(s) covering this row's start time
     activeShifts = Guide_Shifts WHERE Shift_Start <= rowStart AND rowStart < Shift_End
-    guideCapacity = SUM(Number_of_Guides for activeShifts)   // default: shifts don't overlap; see Section 20, Item 1
+    guideCapacity = SUM(Number_of_Guides for activeShifts)   // shifts may overlap in time;
+                                                              // counts sum (confirmed, Decision Log Q2)
 
     // Lunch check uses the ROW's own Slot_Interval-wide window, NOT the full Tour_Duration
     isLunchRow = Lunch_Block_Needed AND (rowStart < Lunch_End_Time) AND (rowEnd > Lunch_Start_Time)
@@ -378,7 +379,7 @@ FOR EACH selected Location L:
 
     status = (onsiteCapacity == 0) ? "Closed" : "Open"
     // NOTE: shown here as Open/Closed for illustration only — exact DVC_Slot_Status__c
-    // picklist values are pending business confirmation (Section 7.4, Section 20 Item 6)
+    // picklist values are pending business confirmation (Section 7.4, Section 20 Item 4)
 
     RENDER/CREATE slot:
       Slot_Start = rowStart, Slot_End = rowEnd,
@@ -392,7 +393,7 @@ FOR EACH selected Location L:
 
 This reproduces the behavior confirmed in the mock-ups exactly: a row only shows non-zero capacity when it aligns with a guide-availability boundary (start of shift, or `Tour_Duration` clock-time after the last tour started), and "0" rows are exactly the guide-occupied and lunch-blocked ones.
 
-**Important nuance (flagged for business, Section 20 Item 9):** because the Lunch check only looks at each row's own width, a tour is allowed to **start** in a row that doesn't itself touch the lunch window, even if that tour's full `Tour_Duration` would run through part of the lunch break. For example, with `Tour_Duration` = 90 min and Lunch 12:30–01:30 PM, an 11:30 AM row shows capacity (open) even though that tour would run until 01:00 PM, overlapping lunch. This matches the mock-up exactly, but hasn't been explicitly confirmed as intended business behavior.
+**Important nuance (Decision Log Q16, Section 20 Item 7):** because the Lunch check only looks at each row's own width, a tour is allowed to **start** in a row that doesn't itself touch the lunch window, even if that tour's full `Tour_Duration` would run through part of the lunch break. For example, with `Tour_Duration` = 90 min and Lunch 12:30–01:30 PM, an 11:30 AM row shows capacity (open) even though that tour would run until 01:00 PM, overlapping lunch. This matches the mock-up exactly, and has been accepted as-is per business confirmation (Q16).
 
 ### 10.2 Worked Example
 
@@ -416,7 +417,7 @@ Given: Opening 08:30 AM, Closing 04:00 PM, Tour Duration = 90 mins, Slot Interva
 | 03:00 PM | 03:30 PM | 2 | 1 | false | Open | Guides free again |
 | 03:30 PM | 04:00 PM | 0 | 0 | false | Closed | Guides occupied |
 
-**15 rows total — 5 Open, 10 Closed (2 of which are explicit Lunch rows).** Note the gap between opens widens from 90 minutes to 120 minutes right at lunch (11:30 AM → 01:30 PM instead of 11:30 AM → 01:00 PM), because the 01:00 PM row itself touches the lunch window and gets suppressed even though guides are technically free at exactly 01:00 PM. Also note the 11:30 AM row is open even though that 90-minute tour will run until 01:00 PM, crossing into the lunch window — see the nuance flagged in Section 10.1 and Section 20, Item 9. The same logic applies identically at 15- and 60-minute increments (UAC13–16); see the full set of Duration × Interval combinations in Section 10.6.
+**15 rows total — 5 Open, 10 Closed (2 of which are explicit Lunch rows).** Note the gap between opens widens from 90 minutes to 120 minutes right at lunch (11:30 AM → 01:30 PM instead of 11:30 AM → 01:00 PM), because the 01:00 PM row itself touches the lunch window and gets suppressed even though guides are technically free at exactly 01:00 PM. Also note the 11:30 AM row is open even though that 90-minute tour will run until 01:00 PM, crossing into the lunch window — see the nuance flagged in Section 10.1 and Section 20, Item 7 (accepted as-is per Decision Log Q16). The same logic applies identically at 15- and 60-minute increments (UAC13–16); see the full set of Duration × Interval combinations in Section 10.6.
 
 ### 10.3 Lunch Block Handling
 
@@ -449,7 +450,7 @@ The tables below show **actual sample field values** for the records created in 
 | 5 | 60 min | 15 min | 30 | 7 | 23 (4 lunch) |
 | 6 | 90 min | 60 min | 7 ⚠️ | 3 | 4 (1 lunch) |
 
-⚠️ = with a 60-minute Slot Interval, the 7.5-hour operating window (08:30 AM–04:00 PM) doesn't divide evenly, leaving a 30-minute leftover (03:30–04:00 PM) with no slot generated — see Section 20, Item 7.
+⚠️ = with a 60-minute Slot Interval, the 7.5-hour operating window (08:30 AM–04:00 PM) doesn't divide evenly, leaving a 30-minute leftover (03:30–04:00 PM) with no slot generated — accepted as-is per Decision Log Q16 (Section 20, Item 5).
 
 #### Combo 1 — Tour Duration = 90 min, Slot Interval = 30 min
 
@@ -524,7 +525,7 @@ Same `DVC_Tour_Availability__c` fields as Combo 1 except `DVC_Tour_Duration__c` 
 
 #### Combo 4 — Tour Duration = 60 min, Slot Interval = 60 min ⚠️
 
-Same `DVC_Tour_Availability__c` fields as Combo 1 except `DVC_Tour_Duration__c` = **60** and `DVC_Slot_Interval__c` = **60 Minutes**. Only **7 rows** are generated (the 03:30–04:00 PM leftover doesn't fit a full 60-minute row — Section 20, Item 7).
+Same `DVC_Tour_Availability__c` fields as Combo 1 except `DVC_Tour_Duration__c` = **60** and `DVC_Slot_Interval__c` = **60 Minutes**. Only **7 rows** are generated (the 03:30–04:00 PM leftover doesn't fit a full 60-minute row — accepted as-is per Decision Log Q16, Section 20 Item 5).
 
 | Slot Start | Slot End | Onsite | Is Lunch | Status* |
 |---|---|---|---|---|
@@ -546,7 +547,7 @@ Same `DVC_Tour_Availability__c` fields as Combo 1 except `DVC_Tour_Duration__c` 
 
 #### Combo 6 — Tour Duration = 90 min, Slot Interval = 60 min ⚠️
 
-Same `DVC_Tour_Availability__c` fields as Combo 1 except `DVC_Tour_Duration__c` = 90 (unchanged) and `DVC_Slot_Interval__c` = **60 Minutes**. Only **7 rows** are generated (same leftover-block edge case as Combo 4 — Section 20, Item 7).
+Same `DVC_Tour_Availability__c` fields as Combo 1 except `DVC_Tour_Duration__c` = 90 (unchanged) and `DVC_Slot_Interval__c` = **60 Minutes**. Only **7 rows** are generated (same leftover-block edge case as Combo 4 — accepted as-is per Decision Log Q16, Section 20 Item 5).
 
 | Slot Start | Slot End | Onsite | Is Lunch | Status* |
 |---|---|---|---|---|
@@ -574,7 +575,7 @@ Using Combo 1's configuration, but with **both** *Beach Club* and *Boardwalk Vil
 
 Each of `a0X007` and `a0X008` gets its own `DVC_Tour_Guide_Shift__c` and `DVC_Tour_Availability_Slot__c` children (the same 15-row pattern as Combo 1), generated independently but from the same shared configuration — illustrating why `DVC_Location_Date_Key__c` must include `DVC_Slot_Type__c` in addition to Location + Date (Section 15): the same Location + Date could otherwise collide once a second Slot Type (e.g., `Event`, from the separate Event/Group story) is published against it.
 
-*\*Status values shown as `Open`/`Closed` for illustration only — final `DVC_Slot_Status__c` picklist values are pending business confirmation (Section 7.4, Section 20 Item 6).*
+*\*Status values shown as `Open`/`Closed` for illustration only — final `DVC_Slot_Status__c` picklist values are pending business confirmation (Section 7.4, Section 20 Item 4).*
 
 ---
 
@@ -694,7 +695,7 @@ Use custom report types on `DVC_Tour_Availability__c` with related `DVC_Tour_Gui
 |---|---|---|
 | Q0 | Is this story preview-only, or does it need backend persistence? | Preview is a pure client-side (LWC) compute-and-render exercise with **no custom objects created**. Once the user clicks **Publish**, the data is stored to the backend. |
 | Q1 | Is the capacity model guide-driven? | **Yes**  |
-| Q2 | Guide Shift multiplicity rules (overlap, max count, gap handling) | **Pending** — tagged to business for clarification (Section 20, Item 1). |
+| Q2 | Guide Shift multiplicity rules (overlap, max count, gap handling) | **Confirmed (2026-08-20):** shifts **can overlap** in time (overlapping guide counts simply sum, per the existing default algorithm — no change needed); there is **no maximum** number of shifts per day; gaps between shifts (or before the first/after the last shift) show **0** available Tour Slots. Resolves former Open Item 1. |
 | Q3 | Is "Total Onsite Slots" just the display label for the guide-derived number? | **Yes.** |
 | Q4 | How is Online capacity derived? | A **separate numeric input** the admin enters directly per generation, capped ≤ the guide-derived Onsite capacity (UAC10); Onsite is always populated based on guides. |
 | Q5 | Multi-location preview: combined or per-location breakdown? | **Single generic preview grid** (Section 10.5). |
@@ -705,6 +706,10 @@ Use custom report types on `DVC_Tour_Availability__c` with related `DVC_Tour_Gui
 | Q10 | Tour Location data source | **Standard Salesforce `Location` object.** WDW, Disneyland, Aulani are `Location` records with `LocationType = Channel`; related child `Location` records with `LocationType = Resorts` are the actual bookable tour locations. |
 | Q11 | Timezone handling | **Single US org timezone** for now (no per-location timezone conversion). |
 | Q12 | Onsite/Event-Group tab scope | Event/Group is explicitly called out as a **separate story**; this LLD implements Onsite only. |
+| Q13 | Where does the user land after a successful Publish? | **Confirmed (2026-08-20):** the user is navigated to the standard **List View of `DVC_Tour_Availability__c`** (not a blank Generator form, not the individual published record). Resolves former Open Item 2 (Publish UX). |
+| Q14 | Which timezone governs Opening/Closing/Lunch/Shift times? | **Confirmed (2026-08-20): single, fixed US Eastern / org-default timezone**, applied uniformly regardless of which Location(s) are selected. Reconfirms Q11 as-is. A per-Location-timezone approach (with a cross-Channel validation error) was briefly floated by business but has been **explicitly deferred, not adopted**, for this iteration — flagged here in case it needs to be revisited in a future story once locations genuinely spanning different real-world timezones need to be scheduled together. |
+| Q15 | Should Total Onsite Slots become user-editable, reversing Q3/Q6? | **Confirmed (2026-08-20): no reversal** — Total Onsite Slots (`DVC_Total_Onsite_Capacity__c`) remains **system-generated and read-only**; Online Tour Booking Slots remains the only user-editable capacity field, unchanged from Q3/Q6. (Business had floated making Onsite editable in an earlier round of answers, then reconfirmed the original read-only design as final.) |
+| Q16 | Are the Duration × Slot Interval × Lunch Block combinations in Section 10.6 (Combo 1–6) acceptable as the working design? | **Confirmed (2026-08-20): yes, proceed as documented.** The fixed-Slot-Interval-width algorithm (Section 10.1) and all six Duration/Interval combinations (Section 10.6) are accepted as the working design for now. The specific edge cases previously tracked as Open Items 7–9 (trailing partial block when Slot Interval doesn't evenly divide the operating window, non-multiple Duration/Interval pairs, a tour starting into the Lunch Block) remain implemented exactly as documented; business has not asked for different behavior on any of them at this time. |
 
 ---
 
@@ -712,15 +717,15 @@ Use custom report types on `DVC_Tour_Availability__c` with related `DVC_Tour_Gui
 
 | # | Topic | Current Assumption (until confirmed) | Owner |
 |---|---|---|---|
-| 1 | Guide Shift multiplicity rules: can shifts overlap? Is there a max count? How are gaps between shifts (or before the first/after the last shift) handled? | No overlap allowed; unlimited shifts; gaps produce 0-capacity zones (guides simply not on duty) | Business (already tagged ) |
-| 2 | Exact UI/UX and acceptance criteria for the new **Publish** button/flow (not shown in current mock-ups) | Publish button placed alongside "Generate & Preview Schedule," disabled until a preview exists, with a success/failure toast on completion (Section 4.2 step 6, Section 11) | Product/UX |
-| 3 | Exact time-of-day and monitoring/alerting for `DVC_TourAvailabilityDailyRolloverJob` | Runs once daily at a fixed off-peak time (e.g., midnight org time); failure alerting mechanism (email/Platform Event) not yet defined | Business/Architect |
-| 4 | Whether Online Capacity input applies as a single flat value across all non-zero slots, or should support different values across the day | Single flat value seeded across all non-zero slots, then individually editable per row post-generation (Section 10.4) | Product (can revisit if business wants per-shift online defaults) |
-| 5 | Will there ever be a Location record of type `Virtual`? As of now, no `Virtual`-type Location records are being created in the org. | Assumed out of practical scope for now since no such records exist; the Tour Location tree/lookup filter (Section 7.1/7.2) does not need to specifically handle `Virtual` until confirmed otherwise | Business |
-| 6 | Exact `DVC_Slot_Status__c` picklist values (Section 7.4) | Assumed `Available` / `Booked`; unclear whether a distinct value is needed for zero-capacity (guide-occupied/lunch-blocked) slots | Business |
-| 7 | Should Slot Interval always evenly divide the Operating Hours window? With a 60-minute interval over a 7.5-hour day (08:30 AM–04:00 PM), there's a 30-minute leftover (03:30–04:00 PM) that doesn't fit a full row (Section 10.6, Combos 4 & 6) | Trailing partial block is simply dropped (no slot generated for it); no validation currently blocks this combination | Business — question drafted, not yet formally asked/answered |
-| 8 | Are all combinations of Tour Duration and Slot Interval valid, including when Tour Duration is not an exact multiple of Slot Interval (e.g., 90 min duration with a 60-minute interval)? | Currently allowed; the algorithm (Section 10.1) handles it correctly via clock-time occupancy tracking, but this hasn't been confirmed as an intended supported combination vs. one that should be restricted by validation | Business — question drafted, not yet formally asked/answered |
-| 9 | Should a tour be allowed to start if it would run into/through the Lunch Block? (E.g., a 90-minute tour starting 11:30 AM with Lunch 12:30–01:30 PM runs until 01:00 PM, crossing into lunch — the mock-up shows this as allowed.) | Currently allowed, since the Lunch check only applies to each row's own width, not the full tour span (Section 10.1, Section 10.3) | Business — question drafted, not yet formally asked/answered |
+| 1 | Exact time-of-day and monitoring/alerting for `DVC_TourAvailabilityDailyRolloverJob` | Runs once daily at a fixed off-peak time (e.g., midnight org time); failure alerting mechanism (email/Platform Event) not yet defined | Business/Architect |
+| 2 | Whether Online Capacity input applies as a single flat value across all non-zero slots, or should support different values across the day | Single flat value seeded across all non-zero slots, then individually editable per row post-generation (Section 10.4) | Product (can revisit if business wants per-shift online defaults) |
+| 3 | Will there ever be a Location record of type `Virtual`? As of now, no `Virtual`-type Location records are being created in the org. | Assumed out of practical scope for now since no such records exist; the Tour Location tree/lookup filter (Section 7.1/7.2) does not need to specifically handle `Virtual` until confirmed otherwise | Business |
+| 4 | Exact `DVC_Slot_Status__c` picklist values (Section 7.4) | Assumed `Available` / `Booked`; unclear whether a distinct value is needed for zero-capacity (guide-occupied/lunch-blocked) slots | Business |
+| 5 | Trailing partial block when Slot Interval doesn't evenly divide the Operating Hours window (e.g., a 60-minute interval over a 7.5-hour day leaves 03:30–04:00 PM uncovered, Section 10.6 Combos 4 & 6) | **Accepted as-is per Q16 (2026-08-20)** — trailing partial block is simply dropped (no slot generated for it); no validation currently blocks this combination | Resolved for now — revisit only if business raises it again |
+| 6 | Non-multiple Tour Duration / Slot Interval pairs (e.g., 90-min Duration with a 60-min Interval) | **Accepted as-is per Q16 (2026-08-20)** — currently allowed; the algorithm (Section 10.1) handles it correctly via clock-time occupancy tracking | Resolved for now — revisit only if business raises it again |
+| 7 | A tour starting before Lunch but running into/through it (e.g., a 90-minute tour starting 11:30 AM with Lunch 12:30–01:30 PM runs until 01:00 PM, crossing into lunch) | **Accepted as-is per Q16 (2026-08-20)** — currently allowed, since the Lunch check only applies to each row's own width, not the full tour span (Section 10.1, Section 10.3) | Resolved for now — revisit only if business raises it again |
+
+Former Items 1 (Guide Shift multiplicity) and 2 (Publish button UX) from earlier revisions of this table have been resolved and moved to the Decision Log as Q2 and Q13 respectively.
 
 ---
 
